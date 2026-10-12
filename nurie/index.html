@@ -294,7 +294,24 @@ if (typeof document !== 'undefined') (function () {
   });
 
   // ぬる
+  // 指1本で「トン」とさわったときだけぬる。2本指のズームや、なぞって動かしたときはぬらない
+  var touches = {}, tapOk = false, tapStart = null;
   cv.addEventListener('pointerdown', function (e) {
+    touches[e.pointerId] = true;
+    if (Object.keys(touches).length === 1) { tapOk = true; tapStart = { id: e.pointerId, x: e.clientX, y: e.clientY, t: Date.now() }; }
+    else tapOk = false;
+  });
+  cv.addEventListener('pointermove', function (e) {
+    if (tapStart && e.pointerId === tapStart.id && Math.hypot(e.clientX - tapStart.x, e.clientY - tapStart.y) > 12) tapOk = false;
+  });
+  function endTouch(e) { delete touches[e.pointerId]; }
+  cv.addEventListener('pointercancel', function (e) { endTouch(e); tapOk = false; });
+  cv.addEventListener('pointerleave', function (e) { endTouch(e); });
+  cv.addEventListener('pointerup', function (e) {
+    endTouch(e);
+    var ok = tapOk && tapStart && e.pointerId === tapStart.id && Date.now() - tapStart.t < 600 && Object.keys(touches).length === 0;
+    tapOk = false;
+    if (!ok) return;
     var r = cv.getBoundingClientRect();
     var x = Math.floor((e.clientX - r.left) * w / r.width), y = Math.floor((e.clientY - r.top) * h / r.height);
     var region = floodRegion(barrier, w, h, x, y);
