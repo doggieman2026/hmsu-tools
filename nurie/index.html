@@ -43,6 +43,9 @@ button:focus-visible,label.btn:focus-within,input:focus-visible{outline:3px soli
 .panel h2{font-size:1rem;margin:0}
 .slider{display:flex;flex-direction:column;gap:2px;font-size:.85rem;color:var(--muted)}
 input[type=range]{width:100%}
+.cambox{display:flex;flex-direction:column;gap:10px}
+video{width:100%;border-radius:10px;background:#000;display:block}
+select{font:inherit;color:var(--ink);background:var(--surface);border:2px solid var(--line);border-radius:8px;padding:8px}
 .visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .msg{font-size:.85rem;color:var(--muted);min-height:1.4em}
 footer{font-size:.78rem;color:var(--muted);display:flex;flex-direction:column;gap:4px}
@@ -69,10 +72,24 @@ footer{font-size:.78rem;color:var(--muted);display:flex;flex-direction:column;ga
   <section class="panel">
     <h2>おうちの人へ：写真をとりこむ</h2>
     <div class="row">
-      <label class="btn primary" for="cam">カメラでとる<input class="visually-hidden" id="cam" type="file" accept="image/*" capture="environment"></label>
+      <button class="btn primary" id="camopen" type="button">カメラでとる</button>
+      <input class="visually-hidden" id="cam" type="file" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
       <label class="btn" for="file">写真をえらぶ<input class="visually-hidden" id="file" type="file" accept="image/*"></label>
       <button class="btn" id="sample" type="button">見本の絵にもどす</button>
     </div>
+    <div class="cambox" id="cambox" hidden>
+      <video id="video" playsinline muted></video>
+      <div class="row">
+        <button class="btn primary" id="shoot" type="button">とる</button>
+        <button class="btn" id="camclose" type="button">やめる</button>
+      </div>
+    </div>
+    <label class="slider" for="mode">とりこみ方
+      <select id="mode">
+        <option value="line">ぬりえ・線でかいた絵</option>
+        <option value="photo">ふつうの写真（線をつくる）</option>
+      </select>
+    </label>
     <label class="slider" for="thr">線のひろい方（色がはみ出すときは右へ、線が太すぎるときは左へ）
       <input id="thr" type="range" min="55" max="95" value="78">
     </label>
@@ -84,6 +101,7 @@ footer{font-size:.78rem;color:var(--muted);display:flex;flex-direction:column;ga
   <footer>
     <p>写真はこの端末の中だけで処理します。どこにも送信・保存しません。</p>
     <p>明るい場所で、紙を真上からとるときれいに線がひろえます。</p>
+    <p>ふつうの写真は、りんかくから線をつくります。形がはっきりした写真ほどうまくいきます。こまかい模様や暗い写真は苦手です。</p>
     <p>ご自身で用意したぬりえを、個人で楽しむためにお使いください。</p>
   </footer>
 </div>
@@ -158,7 +176,41 @@ function floodRegion(barrier, w, h, sx, sy) {
   }
   return out;
 }
-if (typeof module !== 'undefined') module.exports = { normalize: normalize, makeBarrier: makeBarrier, floodRegion: floodRegion };
+// ふつうの写真から、りんかくの線を取り出す。戻り値は 0（線）〜255（紙）
+function photoToLines(lum, w, h) {
+  var r = Math.max(1, Math.round(Math.min(w, h) / 260)), W = w + 1, x, y, i;
+  var integ = new Float64Array(W * (h + 1));
+  for (y = 0; y < h; y++) { var rs = 0; for (x = 0; x < w; x++) { rs += lum[y * w + x]; integ[(y + 1) * W + x + 1] = integ[y * W + x + 1] + rs; } }
+  var bl = new Float32Array(w * h);
+  for (y = 0; y < h; y++) { var y0 = Math.max(0, y - r), y1 = Math.min(h, y + r + 1);
+    for (x = 0; x < w; x++) { var x0 = Math.max(0, x - r), x1 = Math.min(w, x + r + 1);
+      bl[y * w + x] = (integ[y1 * W + x1] - integ[y0 * W + x1] - integ[y1 * W + x0] + integ[y0 * W + x0]) / ((x1 - x0) * (y1 - y0)); } }
+  var mag = new Float32Array(w * h), hist = new Uint32Array(1024);
+  for (y = 1; y < h - 1; y++) for (x = 1; x < w - 1; x++) {
+    i = y * w + x;
+    var gx = bl[i - w + 1] + 2 * bl[i + 1] + bl[i + w + 1] - bl[i - w - 1] - 2 * bl[i - 1] - bl[i + w - 1];
+    var gy = bl[i + w - 1] + 2 * bl[i + w] + bl[i + w + 1] - bl[i - w - 1] - 2 * bl[i - w] - bl[i - w + 1];
+    var m = Math.sqrt(gx * gx + gy * gy); mag[i] = m; hist[Math.min(1023, m | 0)]++;
+  }
+  // なだらかな明るさの変化は線にしない（下位60%を基準に切り捨て）。上位4%を「はっきりした線」とみなす
+  var total = (w - 2) * (h - 2), acc = 0, p60 = 0, p96 = 1023, got60 = false;
+  for (i = 0; i < 1024; i++) { acc += hist[i]; if (!got60 && acc >= total * 0.6) { p60 = i; got60 = true; } if (acc >= total * 0.96) { p96 = i; break; } }
+  var floor = Math.max(4, p60 * 1.5 + 2), gain = 230 / Math.max(8, p96 - floor), out = new Uint8ClampedArray(w * h).fill(255);
+  for (i = 0; i < w * h; i++) out[i] = 255 - Math.max(0, Math.min(255, (mag[i] - floor) * gain));
+  return out;
+}
+// 線の絵かどうかを見分ける（紙の白が大半で、暗い線が少しだけ）
+function looksLikeLineArt(norm, lum) {
+  var dark = 0, mid = 0, n = norm.length, i, hist = new Uint32Array(256);
+  for (i = 0; i < n; i++) { if (norm[i] < 150) dark++; else if (norm[i] < 235) mid++; hist[Math.min(255, lum[i] | 0)]++; }
+  // 紙の明るさ（上位2割）にくらべて暗いのに線ではない場所＝ぬりつぶされた面。多ければ写真
+  var acc = 0, bright = 255;
+  for (i = 255; i >= 0; i--) { acc += hist[i]; if (acc >= n * 0.2) { bright = i; break; } }
+  var filled = 0;
+  for (i = 0; i < n; i++) if (lum[i] < bright * 0.6 && norm[i] > 200) filled++;
+  return dark / n < 0.3 && mid / n < 0.3 && filled / n < 0.08;
+}
+if (typeof module !== 'undefined') module.exports = { normalize: normalize, makeBarrier: makeBarrier, floodRegion: floodRegion, photoToLines: photoToLines, looksLikeLineArt: looksLikeLineArt };
 
 /* ---- 画面 ---- */
 if (typeof document !== 'undefined') (function () {
@@ -168,6 +220,7 @@ if (typeof document !== 'undefined') (function () {
   var msg = document.getElementById('msg'), thr = document.getElementById('thr'), gap = document.getElementById('gap');
   var undoBtn = document.getElementById('undo');
   var w = 0, h = 0, norm = null, barrier = null, paint = null, history = [], color = COLORS[0];
+  var lumKeep = null, mode = 'line', modeSel = document.getElementById('mode');
 
   function say(t) { msg.textContent = t; }
   function hexToRgb(hex) { var n = parseInt(hex.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; }
@@ -186,7 +239,7 @@ if (typeof document !== 'undefined') (function () {
     paint = new Uint8ClampedArray(w * h * 4).fill(255);
     history = []; undoBtn.disabled = true;
   }
-  function load(source, sw, sh) {
+  function load(source, sw, sh, forceMode) {
     var scale = Math.min(1, 1000 / Math.max(sw, sh));
     w = Math.max(1, Math.round(sw * scale)); h = Math.max(1, Math.round(sh * scale));
     cv.width = w; cv.height = h;
@@ -194,8 +247,19 @@ if (typeof document !== 'undefined') (function () {
     ctx.drawImage(source, 0, 0, w, h);
     var d = ctx.getImageData(0, 0, w, h).data, lum = new Float32Array(w * h);
     for (var i = 0, p = 0; i < w * h; i++, p += 4) lum[i] = 0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2];
-    norm = normalize(lum, w, h);
+    lumKeep = lum;
+    var asLine = normalize(lum, w, h);
+    if (forceMode) mode = forceMode; else mode = looksLikeLineArt(asLine, lum) ? 'line' : 'photo';
+    modeSel.value = mode;
+    norm = mode === 'line' ? asLine : photoToLines(lum, w, h);
     rebuild(); blank(); render();
+  }
+  function remode() {
+    if (!lumKeep) return;
+    mode = modeSel.value;
+    norm = mode === 'line' ? normalize(lumKeep, w, h) : photoToLines(lumKeep, w, h);
+    rebuild(); blank(); render();
+    say(mode === 'line' ? '線の絵としてとりこんだよ。' : '写真から線をつくったよ。');
   }
   function drawSample() {
     var c = document.createElement('canvas'); c.width = 800; c.height = 600;
@@ -213,7 +277,7 @@ if (typeof document !== 'undefined') (function () {
     g.beginPath(); g.moveTo(120, 462); g.lineTo(120, 385); g.stroke();                                // はな
     for (var k = 0; k < 5; k++) { var u = k * Math.PI * 2 / 5 - Math.PI / 2; g.beginPath(); g.arc(120 + Math.cos(u) * 27, 355 + Math.sin(u) * 27, 17, 0, Math.PI * 2); g.stroke(); }
     g.beginPath(); g.arc(120, 355, 13, 0, Math.PI * 2); g.fillStyle = '#ffffff'; g.fill(); g.stroke();
-    load(c, 800, 600);
+    load(c, 800, 600, 'line');
   }
 
   // いろ
@@ -263,7 +327,7 @@ if (typeof document !== 'undefined') (function () {
     var f = e.target.files && e.target.files[0];
     if (!f) return;
     var img = new Image(), url = URL.createObjectURL(f);
-    img.onload = function () { load(img, img.naturalWidth, img.naturalHeight); URL.revokeObjectURL(url); say('とりこんだよ。ぬりたいところをタッチしてね。'); };
+    img.onload = function () { load(img, img.naturalWidth, img.naturalHeight); URL.revokeObjectURL(url); say(mode === 'line' ? 'とりこんだよ。ぬりたいところをタッチしてね。' : '写真から線をつくったよ。ぬりたいところをタッチしてね。'); };
     img.onerror = function () { URL.revokeObjectURL(url); say('この写真はひらけませんでした。べつの写真でためしてね。'); };
     img.src = url; e.target.value = '';
   }
@@ -272,6 +336,28 @@ if (typeof document !== 'undefined') (function () {
   document.getElementById('sample').addEventListener('click', function () { drawSample(); say(''); });
   function retune() { if (norm) { rebuild(); say('線をひろい直したよ。'); } }
   thr.addEventListener('change', retune); gap.addEventListener('change', retune);
+  modeSel.addEventListener('change', remode);
+
+  // カメラ（ページの中で映す）
+  var camBox = document.getElementById('cambox'), video = document.getElementById('video'), stream = null;
+  function stopCam() { if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; } camBox.hidden = true; }
+  document.getElementById('camopen').addEventListener('click', function () {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { document.getElementById('cam').click(); return; }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false }).then(function (st) {
+      stream = st; video.srcObject = st; camBox.hidden = false; video.play();
+      say('カメラをむけて「とる」をおしてね。');
+    }).catch(function () {
+      say('カメラをひらけませんでした。ブラウザの設定でカメラをゆるすか、「写真をえらぶ」をつかってね。');
+      document.getElementById('cam').click();
+    });
+  });
+  document.getElementById('shoot').addEventListener('click', function () {
+    if (!video.videoWidth) { say('カメラのじゅんびちゅうだよ。もういちどおしてね。'); return; }
+    load(video, video.videoWidth, video.videoHeight); stopCam();
+    say(mode === 'line' ? 'とりこんだよ。ぬりたいところをタッチしてね。' : '写真から線をつくったよ。ぬりたいところをタッチしてね。');
+    cv.scrollIntoView({ block: 'start' });
+  });
+  document.getElementById('camclose').addEventListener('click', function () { stopCam(); say(''); });
 
   drawSample();
 })();
