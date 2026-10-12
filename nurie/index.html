@@ -69,7 +69,8 @@ footer{font-size:.78rem;color:var(--muted);display:flex;flex-direction:column;ga
   <section class="panel">
     <h2>おうちの人へ：写真をとりこむ</h2>
     <div class="row">
-      <label class="btn primary" for="file">写真をえらぶ・とる<input class="visually-hidden" id="file" type="file" accept="image/*"></label>
+      <label class="btn primary" for="cam">カメラでとる<input class="visually-hidden" id="cam" type="file" accept="image/*" capture="environment"></label>
+      <label class="btn" for="file">写真をえらぶ<input class="visually-hidden" id="file" type="file" accept="image/*"></label>
       <button class="btn" id="sample" type="button">見本の絵にもどす</button>
     </div>
     <label class="slider" for="thr">線のひろい方（色がはみ出すときは右へ、線が太すぎるときは左へ）
@@ -258,14 +259,16 @@ if (typeof document !== 'undefined') (function () {
   });
 
   // 写真
-  document.getElementById('file').addEventListener('change', function (e) {
+  function onPick(e) {
     var f = e.target.files && e.target.files[0];
     if (!f) return;
     var img = new Image(), url = URL.createObjectURL(f);
     img.onload = function () { load(img, img.naturalWidth, img.naturalHeight); URL.revokeObjectURL(url); say('とりこんだよ。ぬりたいところをタッチしてね。'); };
     img.onerror = function () { URL.revokeObjectURL(url); say('この写真はひらけませんでした。べつの写真でためしてね。'); };
     img.src = url; e.target.value = '';
-  });
+  }
+  document.getElementById('file').addEventListener('change', onPick);
+  document.getElementById('cam').addEventListener('change', onPick);
   document.getElementById('sample').addEventListener('click', function () { drawSample(); say(''); });
   function retune() { if (norm) { rebuild(); say('線をひろい直したよ。'); } }
   thr.addEventListener('change', retune); gap.addEventListener('change', retune);
