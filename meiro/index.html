@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>めいろメーカー</title>
+<style>
+/* layout: 上に操作、下に印刷できる迷路1枚。印刷時は操作を隠して迷路だけ */
+:root{
+  --bg:#f2f7f4; --surface:#ffffff; --ink:#1f2a24; --muted:#5e6b64; --line:#cfdcd4;
+  --accent:#e0703a; --accent-ink:#ffffff; --path:#e0703a;
+  --font:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#151b18;--surface:#1f2723;--ink:#e9efeb;--muted:#a3b0a9;--line:#33403a;--accent:#f39a6b;--accent-ink:#1a120d;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#151b18;--surface:#1f2723;--ink:#e9efeb;--muted:#a3b0a9;--line:#33403a;--accent:#f39a6b;--accent-ink:#1a120d;color-scheme:dark}
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.6}
+.wrap{max-width:720px;margin:0 auto;padding-inline:16px;padding-block:20px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:1.45rem;margin:0}
+p{margin:0}
+.lead{color:var(--muted);font-size:.9rem}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+label{display:flex;flex-direction:column;gap:4px;font-size:.82rem;color:var(--muted);min-width:0}
+input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;width:100%;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+button{font:inherit;font-weight:700;cursor:pointer;border-radius:999px;border:2px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 18px;min-height:46px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.sheet{background:#ffffff;color:#111;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px;align-items:center}
+.sheet h2{font-size:1.5rem;margin:0;text-align:center;color:#111}
+.sheet svg{width:100%;height:auto;max-width:640px;display:block}
+.sheet .foot{font-size:.75rem;color:#555}
+@media (max-width:420px){.grid{grid-template-columns:1fr}}
+@media print{
+  body{background:#fff}
+  .noprint{display:none!important}
+  .wrap{padding:0;max-width:none}
+  .sheet{padding:0;border-radius:0}
+  .sheet svg{max-width:none;width:100%}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="noprint">
+    <h1>めいろメーカー</h1>
+    <p class="lead">名前と難しさをえらぶと、毎回ちがう迷路ができます。印刷して遊べます。答えもすぐ出せます。</p>
+  </header>
+
+  <section class="panel noprint">
+    <div class="grid">
+      <label for="name">名前（タイトルに入ります）<input id="name" type="text" maxlength="12" value="" placeholder="例：はなこ"></label>
+      <label for="level">むずかしさ
+        <select id="level">
+          <option value="8">かんたん（3〜4さい）</option>
+          <option value="12" selected>ふつう（5〜6さい）</option>
+          <option value="18">むずかしい（小学生）</option>
+          <option value="26">とてもむずかしい（大人も）</option>
+        </select>
+      </label>
+    </div>
+    <div class="row">
+      <button class="primary" id="new" type="button">あたらしい迷路</button>
+      <button id="ans" type="button" aria-pressed="false">答えを見る</button>
+      <button id="print" type="button">印刷する</button>
+    </div>
+  </section>
+
+  <section class="sheet" id="sheet">
+    <h2 id="title"></h2>
+    <svg id="maze" role="img" aria-label="迷路"></svg>
+    <p class="foot" id="foot"></p>
+  </section>
+</div>
+
+<script>
+// 迷路を作る（穴掘り法）。乱数の種が同じなら同じ迷路になる
+function rng(seed) { return function () { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }; }
+function makeMaze(cols, rows, seed) {
+  var rand = rng(seed), n = cols * rows;
+  var walls = []; // 各マスの [上,右,下,左] に壁があるか
+  for (var i = 0; i < n; i++) walls.push([1, 1, 1, 1]);
+  var seen = new Uint8Array(n), stack = [0]; seen[0] = 1;
+  var D = [[0, -1, 0, 2], [1, 0, 1, 3], [0, 1, 2, 0], [-1, 0, 3, 1]];
+  while (stack.length) {
+    var c = stack[stack.length - 1], x = c % cols, y = (c / cols) | 0, opts = [];
+    for (var d = 0; d < 4; d++) {
+      var nx = x + D[d][0], ny = y + D[d][1];
+      if (nx >= 0 && ny >= 0 && nx < cols && ny < rows && !seen[ny * cols + nx]) opts.push(d);
+    }
+    if (!opts.length) { stack.pop(); continue; }
+    var k = opts[(rand() * opts.length) | 0], m = (y + D[k][1]) * cols + x + D[k][0];
+    walls[c][D[k][2]] = 0; walls[m][D[k][3]] = 0; seen[m] = 1; stack.push(m);
+  }
+  return walls;
+}
+// 左上から右下までの道を探す
+function solve(walls, cols, rows) {
+  var n = cols * rows, prev = new Int32Array(n).fill(-1), q = [0], D = [[0, -1], [1, 0], [0, 1], [-1, 0]];
+  prev[0] = 0;
+  while (q.length) {
+    var c = q.shift(); if (c === n - 1) break;
+    for (var d = 0; d < 4; d++) {
+      if (walls[c][d]) continue;
+      var m = c + D[d][0] + D[d][1] * cols;
+      if (prev[m] === -1) { prev[m] = c; q.push(m); }
+    }
+  }
+  var path = [n - 1]; while (path[path.length - 1] !== 0) path.push(prev[path[path.length - 1]]);
+  return path.reverse();
+}
+if (typeof module !== 'undefined') module.exports = { makeMaze: makeMaze, solve: solve };
+
+if (typeof document !== 'undefined') (function () {
+  var svg = document.getElementById('maze'), state = { seed: Date.now() >>> 0, showAns: false };
+  var nameEl = document.getElementById('name'), levelEl = document.getElementById('level');
+  try { var saved = localStorage.getItem('meiro-name'); if (saved != null) nameEl.value = saved; } catch (e) {}
+  var NS = 'http://www.w3.org/2000/svg';
+  function node(t, a) { var e = document.createElementNS(NS, t); for (var k in a) e.setAttribute(k, a[k]); return e; }
+  function draw() {
+    var cols = Number(levelEl.value), rows = Math.round(cols * 1.3), cell = 30, pad = 40;
+    var W = cols * cell + pad * 2, H = rows * cell + pad * 2;
+    var walls = makeMaze(cols, rows, state.seed);
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.textContent = '';
+    svg.appendChild(node('rect', { x: 0, y: 0, width: W, height: H, fill: '#ffffff' }));
+    var sw = cols > 20 ? 2.4 : 3.2, d = '';
+    walls.forEach(function (w, i) {
+      var x = pad + (i % cols) * cell, y = pad + ((i / cols) | 0) * cell;
+      if (w[0] && i !== 0) d += 'M' + x + ' ' + y + 'h' + cell;
+      if (w[1]) d += 'M' + (x + cell) + ' ' + y + 'v' + cell;
+      if (w[2] && i !== cols * rows - 1) d += 'M' + x + ' ' + (y + cell) + 'h' + cell;
+      if (w[3]) d += 'M' + x + ' ' + y + 'v' + cell;
+    });
+    svg.appendChild(node('path', { d: d, stroke: '#1f2a24', 'stroke-width': sw, 'stroke-linecap': 'round', fill: 'none' }));
+    if (state.showAns) {
+      var pts = solve(walls, cols, rows).map(function (c) { return (pad + (c % cols) * cell + cell / 2) + ',' + (pad + ((c / cols) | 0) * cell + cell / 2); });
+      pts.unshift((pad + cell / 2) + ',' + (pad - 14)); pts.push((W - pad - cell / 2) + ',' + (H - pad + 14));
+      svg.appendChild(node('polyline', { points: pts.join(' '), stroke: '#e0703a', 'stroke-width': cell * 0.32, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', fill: 'none', opacity: 0.85 }));
+    }
+    var s = node('text', { x: pad + cell / 2, y: pad - 14, 'text-anchor': 'middle', 'font-size': 15, 'font-weight': 700, fill: '#1f2a24' }); s.textContent = 'スタート'; svg.appendChild(s);
+    var g = node('text', { x: W - pad - cell / 2, y: H - pad + 26, 'text-anchor': 'middle', 'font-size': 15, 'font-weight': 700, fill: '#1f2a24' }); g.textContent = 'ゴール'; svg.appendChild(g);
+    var nm = nameEl.value.trim();
+    document.getElementById('title').textContent = (nm ? nm + 'の' : '') + 'めいろ';
+    document.getElementById('foot').textContent = levelEl.options[levelEl.selectedIndex].text.replace(/（.*）/, '') + '・No.' + (state.seed % 100000);
+    var b = document.getElementById('ans'); b.textContent = state.showAns ? '答えをかくす' : '答えを見る'; b.setAttribute('aria-pressed', state.showAns ? 'true' : 'false');
+  }
+  document.getElementById('new').addEventListener('click', function () { state.seed = (Math.random() * 4294967296) >>> 0; state.showAns = false; draw(); });
+  document.getElementById('ans').addEventListener('click', function () { state.showAns = !state.showAns; draw(); });
+  document.getElementById('print').addEventListener('click', function () { window.print(); });
+  nameEl.addEventListener('input', function () { try { localStorage.setItem('meiro-name', nameEl.value); } catch (e) {} draw(); });
+  levelEl.addEventListener('change', function () { state.showAns = false; draw(); });
+  draw();
+})();
+</script>
+</body>
+</html>
