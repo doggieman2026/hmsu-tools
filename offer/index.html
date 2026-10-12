@@ -39,6 +39,8 @@ tbody tr:last-child td{border-bottom:none}
 .cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .col{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .col.a{border-top:4px solid var(--a)}.col.b{border-top:4px solid var(--b)}
+.col h3{font-size:.86rem;margin:6px 0 0;padding-top:8px;border-top:1px solid var(--line)}
+.col h3:first-of-type{border-top:none;padding-top:0}
 label{display:flex;flex-direction:column;gap:3px;font-size:.78rem;color:var(--muted)}
 input{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:7px 8px;width:100%;min-width:0}
 input[type=number]{font-family:var(--num);text-align:right}
@@ -53,8 +55,8 @@ footer{font-size:.8rem;color:var(--muted);border-top:1px solid var(--line);paddi
   <header>
     <section>
       <h1>オファーくらべ</h1>
-      <p class="lead">今の会社と転職先のオファーを、「確実にもらえる額」「ふつうの年」「悪い年」の3つで並べます。年収の数字だけ見て決めないための道具です。</p>
-      <p class="note">入っている数字は見本です。すべて架空で、単位は万円、税引き前の額面です。</p>
+      <p class="lead">今の会社と転職先のオファーを、「確実にもらえる額」「ふつうの年」「悪い年」、社宅や持株会などの福利厚生、通勤まで含めた時給で並べます。年収の数字だけ見て決めないための道具です。</p>
+      <p class="note">入っている数字は見本です。すべて架空です。お金は万円、税引き前の額面です。</p>
     </section>
   </header>
 
@@ -77,7 +79,8 @@ footer{font-size:.8rem;color:var(--muted);border-top:1px solid var(--line);paddi
 
   <footer>
     <p>退職金や企業年金、賞与の決まり方は会社ごとに違います。オファーレターと就業規則で確認してください。</p>
-    <p>税金と社会保険料は計算していません。手取りは額面の差より小さくなります。</p>
+    <p>税金と社会保険料は計算していません。手取りは額面の差より小さくなります。社宅や福利厚生の扱いによって税金が変わることもあります。</p>
+    <p>時給は「福利厚生などを足した額」を、1年に働く時間と通勤時間の合計で割ったものです。有給休暇の取得は数えていません。</p>
     <p>この道具は入れた数字を足し引きするだけで、転職の助言はしません。入力した内容は、この端末のブラウザ内にだけ保存されます。</p>
   </footer>
 </div>
@@ -85,6 +88,7 @@ footer{font-size:.8rem;color:var(--muted);border-top:1px solid var(--line);paddi
 <script>
 var FIELDS = [
   ['name', '会社の呼び名', 'text'],
+  ['#', '給料（万円）'],
   ['base', '基本給（月）', 'number'],
   ['allow', '手当（月。住宅・家族など）', 'number'],
   ['bonus', '決まっている賞与（年）', 'number'],
@@ -92,11 +96,23 @@ var FIELDS = [
   ['var', '業績連動の賞与・インセンティブ（年、100%達成時）', 'number'],
   ['rate', 'ふつうの年の達成率（%）', 'number'],
   ['stock', '株式報酬（年あたり）', 'number'],
-  ['retire', '退職金・企業年金の会社負担（年あたり）', 'number']
+  ['retire', '退職金・企業年金の会社負担（年あたり）', 'number'],
+  ['#', 'その他のプラス・マイナス（万円・年あたり）'],
+  ['house', '社宅・家賃補助で浮くお金', 'number'],
+  ['esop', '持株会の奨励金・自社株の割引', 'number'],
+  ['perk', '保険・福利厚生（金額にするといくら）', 'number'],
+  ['plus', 'その他のプラス', 'number'],
+  ['minus', 'その他のマイナス（自腹の交通費・接待など）', 'number'],
+  ['#', '働く時間'],
+  ['holiday', '年間休日（日）', 'number'],
+  ['hours', '1日の所定労働時間（時間）', 'number'],
+  ['othours', '月の残業時間（時間）', 'number'],
+  ['office', '週の出社日数（日）', 'number'],
+  ['commute', '片道の通勤時間（分）', 'number']
 ];
 var SAMPLE = {
-  a: { name: '今の会社', base: 42, allow: 3, bonus: 160, ot: 5, var: 0, rate: 100, stock: 0, retire: 40 },
-  b: { name: '転職先', base: 58, allow: 0, bonus: 0, ot: 0, var: 180, rate: 80, stock: 30, retire: 0 }
+  a: { name: '今の会社', base: 42, allow: 3, bonus: 160, ot: 5, var: 0, rate: 100, stock: 0, retire: 40, house: 60, esop: 5, perk: 10, plus: 0, minus: 0, holiday: 125, hours: 8, othours: 20, office: 5, commute: 50 },
+  b: { name: '転職先', base: 58, allow: 0, bonus: 0, ot: 0, var: 180, rate: 80, stock: 30, retire: 0, house: 0, esop: 0, perk: 5, plus: 0, minus: 6, holiday: 120, hours: 8, othours: 25, office: 2, commute: 40 }
 };
 function num(v) { v = Number(v); return isFinite(v) ? v : 0; }
 // 3つの年を計算する（単位は入力と同じ）
@@ -104,7 +120,14 @@ function calc(o) {
   var fixed = (num(o.base) + num(o.allow)) * 12 + num(o.bonus);
   var normal = fixed + num(o.ot) * 12 + num(o.var) * num(o.rate) / 100 + num(o.stock);
   var bad = fixed + num(o.ot) * 12;
-  return { fixed: fixed, normal: normal, bad: bad, total: normal + num(o.retire) };
+  var perks = num(o.house) + num(o.esop) + num(o.perk) + num(o.plus) - num(o.minus);
+  var withPerks = normal + perks;
+  // 時給：福利厚生込みの年収 ÷（働いた時間＋通勤時間）。単位は円
+  var days = Math.max(0, 365 - num(o.holiday));
+  var work = days * num(o.hours) + num(o.othours) * 12;
+  var commute = days * Math.min(5, num(o.office)) / 5 * num(o.commute) * 2 / 60;
+  var hourly = work + commute > 0 ? withPerks * 10000 / (work + commute) : 0;
+  return { fixed: fixed, normal: normal, bad: bad, withPerks: withPerks, total: withPerks + num(o.retire), hourly: hourly, hoursYear: work + commute };
 }
 if (typeof module !== 'undefined') module.exports = { calc: calc, SAMPLE: SAMPLE };
 
@@ -122,12 +145,12 @@ if (typeof document !== 'undefined') (function () {
     document.getElementById('hA').textContent = state.a.name || 'A';
     document.getElementById('hB').textContent = state.b.name || 'B';
     rows.textContent = '';
-    [['確実にもらえる額', 'fixed'], ['ふつうの年', 'normal'], ['悪い年（連動分・株が0）', 'bad'], ['退職金などを足した合計', 'total']].forEach(function (r) {
-      var tr = el('tr'), d = B[r[1]] - A[r[1]];
+    [['確実にもらえる額', 'fixed'], ['ふつうの年', 'normal'], ['悪い年（連動分・株が0）', 'bad'], ['福利厚生などを足した額', 'withPerks'], ['退職金などまで足した合計', 'total'], ['時給（円・通勤時間込み）', 'hourly']].forEach(function (r) {
+      var tr = el('tr'), d = B[r[1]] - A[r[1]], f = r[1] === 'hourly' ? function (v) { return Math.round(v).toLocaleString('ja-JP'); } : fmt;
       tr.appendChild(el('td', null, r[0]));
-      tr.appendChild(el('td', { 'class': 'n' }, fmt(A[r[1]])));
-      tr.appendChild(el('td', { 'class': 'n' }, fmt(B[r[1]])));
-      tr.appendChild(el('td', { 'class': 'n diff ' + (d > 0 ? 'up' : d < 0 ? 'down' : '') }, (d > 0 ? '+' : '') + fmt(d)));
+      tr.appendChild(el('td', { 'class': 'n' }, f(A[r[1]])));
+      tr.appendChild(el('td', { 'class': 'n' }, f(B[r[1]])));
+      tr.appendChild(el('td', { 'class': 'n diff ' + (d > 0 ? 'up' : d < 0 ? 'down' : '') }, (d > 0 ? '+' : '') + f(d)));
       rows.appendChild(tr);
     });
     var bn = state.b.name || 'B', an = state.a.name || 'A', v;
@@ -137,6 +160,8 @@ if (typeof document !== 'undefined') (function () {
     else if (dn > 0) v = 'どの年で見ても' + bn + 'が多く、ふつうの年の差は' + fmt(dn) + '万円です。';
     else if (dn < 0) v = 'ふつうの年は' + an + 'が' + fmt(-dn) + '万円多くなります。';
     else v = 'ふつうの年の額は同じです。';
+    var dh = B.hourly - A.hourly;
+    if (Math.abs(dh) >= 1) v += ' 通勤も含めた時給では' + (dh > 0 ? bn : an) + 'が' + Math.round(Math.abs(dh)).toLocaleString('ja-JP') + '円高くなります。';
     document.getElementById('verdict').textContent = v;
   }
   function renderInputs() {
@@ -144,6 +169,7 @@ if (typeof document !== 'undefined') (function () {
     ['a', 'b'].forEach(function (side) {
       var c = el('div', { 'class': 'col ' + side });
       FIELDS.forEach(function (f) {
+        if (f[0] === '#') { c.appendChild(el('h3', null, f[1])); return; }
         var id = side + '-' + f[0], l = el('label', { 'for': id }, f[1]), i = el('input', { id: id, type: f[2] });
         if (f[2] === 'number') { i.min = '0'; i.inputMode = 'decimal'; i.step = 'any'; }
         i.value = state[side][f[0]];
