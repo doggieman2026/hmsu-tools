@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>オファーくらべ</title>
+<style>
+/* layout: 上に結論（3つの年の比較）、下に2社分の入力。金額は等幅・右揃え */
+:root{
+  --bg:#f4f5f8; --surface:#ffffff; --ink:#1a2233; --muted:#5d6678; --line:#d6dae3;
+  --a:#3d5a80; --b:#c8553d; --good:#1f7a55;
+  --font:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;
+  --num:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#12161f;--surface:#1b2130;--ink:#e8ebf2;--muted:#9aa3b5;--line:#2c3447;--a:#8fb0dc;--b:#f08a72;--good:#63d0a0;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#12161f;--surface:#1b2130;--ink:#e8ebf2;--muted:#9aa3b5;--line:#2c3447;--a:#8fb0dc;--b:#f08a72;--good:#63d0a0;color-scheme:dark}
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.7}
+.wrap{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:24px 48px;display:flex;flex-direction:column;gap:22px}
+h1{font-size:1.5rem;margin:0;line-height:1.3}
+h2{font-size:1.05rem;margin:0}
+p{margin:0}
+.lead{color:var(--muted)}
+.note{font-size:.84rem;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:12px}
+.result{background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:340px}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:.8rem;color:var(--muted);font-weight:600;white-space:nowrap}
+td.n{font-family:var(--num)}
+.ca{color:var(--a)}.cb{color:var(--b)}
+.diff.up{color:var(--good);font-weight:700}.diff.down{color:var(--b);font-weight:700}
+tbody tr:last-child td{border-bottom:none}
+.verdict{background:var(--surface);border-left:5px solid var(--good);border-radius:6px;padding:12px 14px}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.col{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.col.a{border-top:4px solid var(--a)}.col.b{border-top:4px solid var(--b)}
+label{display:flex;flex-direction:column;gap:3px;font-size:.78rem;color:var(--muted)}
+input{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:7px 8px;width:100%;min-width:0}
+input[type=number]{font-family:var(--num);text-align:right}
+input:focus-visible,button:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px;align-self:flex-start}
+footer{font-size:.8rem;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:4px}
+@media (max-width:520px){.cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <section>
+      <h1>オファーくらべ</h1>
+      <p class="lead">今の会社と転職先のオファーを、「確実にもらえる額」「ふつうの年」「悪い年」の3つで並べます。年収の数字だけ見て決めないための道具です。</p>
+      <p class="note">入っている数字は見本です。すべて架空で、単位は万円、税引き前の額面です。</p>
+    </section>
+  </header>
+
+  <section aria-live="polite">
+    <h2>くらべた結果</h2>
+    <div class="result">
+      <table>
+        <thead><tr><th>年間（万円）</th><th class="ca" id="hA">A</th><th class="cb" id="hB">B</th><th>差（B−A）</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p class="verdict" id="verdict"></p>
+  </section>
+
+  <section>
+    <h2>条件を入れる</h2>
+    <div class="cols" id="cols"></div>
+    <button type="button" id="reset">見本の数字に戻す</button>
+  </section>
+
+  <footer>
+    <p>退職金や企業年金、賞与の決まり方は会社ごとに違います。オファーレターと就業規則で確認してください。</p>
+    <p>税金と社会保険料は計算していません。手取りは額面の差より小さくなります。</p>
+    <p>この道具は入れた数字を足し引きするだけで、転職の助言はしません。入力した内容は、この端末のブラウザ内にだけ保存されます。</p>
+  </footer>
+</div>
+
+<script>
+var FIELDS = [
+  ['name', '会社の呼び名', 'text'],
+  ['base', '基本給（月）', 'number'],
+  ['allow', '手当（月。住宅・家族など）', 'number'],
+  ['bonus', '決まっている賞与（年）', 'number'],
+  ['ot', '残業代（月の平均）', 'number'],
+  ['var', '業績連動の賞与・インセンティブ（年、100%達成時）', 'number'],
+  ['rate', 'ふつうの年の達成率（%）', 'number'],
+  ['stock', '株式報酬（年あたり）', 'number'],
+  ['retire', '退職金・企業年金の会社負担（年あたり）', 'number']
+];
+var SAMPLE = {
+  a: { name: '今の会社', base: 42, allow: 3, bonus: 160, ot: 5, var: 0, rate: 100, stock: 0, retire: 40 },
+  b: { name: '転職先', base: 58, allow: 0, bonus: 0, ot: 0, var: 180, rate: 80, stock: 30, retire: 0 }
+};
+function num(v) { v = Number(v); return isFinite(v) ? v : 0; }
+// 3つの年を計算する（単位は入力と同じ）
+function calc(o) {
+  var fixed = (num(o.base) + num(o.allow)) * 12 + num(o.bonus);
+  var normal = fixed + num(o.ot) * 12 + num(o.var) * num(o.rate) / 100 + num(o.stock);
+  var bad = fixed + num(o.ot) * 12;
+  return { fixed: fixed, normal: normal, bad: bad, total: normal + num(o.retire) };
+}
+if (typeof module !== 'undefined') module.exports = { calc: calc, SAMPLE: SAMPLE };
+
+if (typeof document !== 'undefined') (function () {
+  var KEY = 'offer-kurabe-v1', state;
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  try { state = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+  if (!state || !state.a || !state.b) state = clone(SAMPLE);
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(t, a, x) { var e = document.createElement(t); for (var k in a || {}) e.setAttribute(k, a[k]); if (x != null) e.textContent = x; return e; }
+  function fmt(v) { return (Math.round(v * 10) / 10).toLocaleString('ja-JP'); }
+
+  function renderResult() {
+    var A = calc(state.a), B = calc(state.b), rows = document.getElementById('rows');
+    document.getElementById('hA').textContent = state.a.name || 'A';
+    document.getElementById('hB').textContent = state.b.name || 'B';
+    rows.textContent = '';
+    [['確実にもらえる額', 'fixed'], ['ふつうの年', 'normal'], ['悪い年（連動分・株が0）', 'bad'], ['退職金などを足した合計', 'total']].forEach(function (r) {
+      var tr = el('tr'), d = B[r[1]] - A[r[1]];
+      tr.appendChild(el('td', null, r[0]));
+      tr.appendChild(el('td', { 'class': 'n' }, fmt(A[r[1]])));
+      tr.appendChild(el('td', { 'class': 'n' }, fmt(B[r[1]])));
+      tr.appendChild(el('td', { 'class': 'n diff ' + (d > 0 ? 'up' : d < 0 ? 'down' : '') }, (d > 0 ? '+' : '') + fmt(d)));
+      rows.appendChild(tr);
+    });
+    var bn = state.b.name || 'B', an = state.a.name || 'A', v;
+    var dn = B.normal - A.normal, db = B.bad - A.bad, dt = B.total - A.total;
+    if (dn > 0 && db < 0) v = 'ふつうの年は' + bn + 'が' + fmt(dn) + '万円多いですが、悪い年は' + an + 'が' + fmt(-db) + '万円多くなります。変動する部分の大きさが分かれ目です。';
+    else if (dn > 0 && dt < 0) v = '年収は' + bn + 'が多いですが、退職金などを足すと' + an + 'が' + fmt(-dt) + '万円多くなります。';
+    else if (dn > 0) v = 'どの年で見ても' + bn + 'が多く、ふつうの年の差は' + fmt(dn) + '万円です。';
+    else if (dn < 0) v = 'ふつうの年は' + an + 'が' + fmt(-dn) + '万円多くなります。';
+    else v = 'ふつうの年の額は同じです。';
+    document.getElementById('verdict').textContent = v;
+  }
+  function renderInputs() {
+    var cols = document.getElementById('cols'); cols.textContent = '';
+    ['a', 'b'].forEach(function (side) {
+      var c = el('div', { 'class': 'col ' + side });
+      FIELDS.forEach(function (f) {
+        var id = side + '-' + f[0], l = el('label', { 'for': id }, f[1]), i = el('input', { id: id, type: f[2] });
+        if (f[2] === 'number') { i.min = '0'; i.inputMode = 'decimal'; i.step = 'any'; }
+        i.value = state[side][f[0]];
+        i.addEventListener('input', function () { state[side][f[0]] = i.value; save(); renderResult(); });
+        l.appendChild(i); c.appendChild(l);
+      });
+      cols.appendChild(c);
+    });
+  }
+  document.getElementById('reset').addEventListener('click', function () { state = clone(SAMPLE); save(); renderInputs(); renderResult(); });
+  renderInputs(); renderResult();
+})();
+</script>
+</body>
+</html>
