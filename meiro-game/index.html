@@ -68,9 +68,9 @@ footer a{color:inherit}
 function rng(seed){return function(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};}
 function makeMaze(cols,rows,seed){var rand=rng(seed),n=cols*rows,walls=[];for(var i=0;i<n;i++)walls.push([1,1,1,1]);
   var seen=new Uint8Array(n),stack=[0];seen[0]=1;var D=[[0,-1,0,2],[1,0,1,3],[0,1,2,0],[-1,0,3,1]];
-  while(stack.length){var c=stack[stack.length-1],x=c%cols,y=(c/cols)|0,o=[];
+  while(stack.length){var si=rand()<0.5?stack.length-1:(rand()*stack.length)|0,c=stack[si],x=c%cols,y=(c/cols)|0,o=[];
     for(var d=0;d<4;d++){var nx=x+D[d][0],ny=y+D[d][1];if(nx>=0&&ny>=0&&nx<cols&&ny<rows&&!seen[ny*cols+nx])o.push(d);}
-    if(!o.length){stack.pop();continue;}var k=o[(rand()*o.length)|0],m=(y+D[k][1])*cols+x+D[k][0];
+    if(!o.length){stack.splice(si,1);continue;}var k=o[(rand()*o.length)|0],m=(y+D[k][1])*cols+x+D[k][0];
     walls[c][D[k][2]]=0;walls[m][D[k][3]]=0;seen[m]=1;stack.push(m);}return walls;}
 var SIZES=[6,8,10,12,14], DX=[0,1,0,-1], DY=[-1,0,1,0];
 var store={get:function(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}},set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
@@ -122,11 +122,18 @@ stageEl.addEventListener('pointerdown',function(e){if(!S.running)return;drag={id
 stageEl.addEventListener('pointermove',function(e){if(drag&&drag.id===e.pointerId){follow(e);e.preventDefault();}});
 ['pointerup','pointercancel'].forEach(function(t){stageEl.addEventListener(t,function(){drag=null;});});
 function follow(e){var r=cv.getBoundingClientRect(),dpr=cv.width/r.width,g=geo();
-  var cx=Math.floor(((e.clientX-r.left)*dpr-g.pad)/g.cell),cy=Math.floor(((e.clientY-r.top)*dpr-g.pad)/g.cell);
-  for(var guard=0;guard<4&&S.running;guard++){var x=S.pos%S.n,y=(S.pos/S.n)|0,dx=cx-x,dy=cy-y;if(!dx&&!dy)break;
-    var h=dx?(dx>0?1:3):-1,v=dy?(dy>0?2:0):-1,order=Math.abs(dx)>=Math.abs(dy)?[h,v]:[v,h],moved=false;
-    for(var j=0;j<2&&!moved;j++)if(order[j]>=0)moved=step(order[j]);
-    if(!moved)break;}}
+  var fx=((e.clientX-r.left)*dpr-g.pad)/g.cell,fy=((e.clientY-r.top)*dpr-g.pad)/g.cell,cx=Math.floor(fx),cy=Math.floor(fy);
+  for(var guard=0;guard<3&&S.running;guard++){var x=S.pos%S.n,y=(S.pos/S.n)|0,dx=cx-x,dy=cy-y;
+    if(!dx&&!dy)break;
+    // 斜めや離れすぎは動かない（なぞった道だけ進む）
+    if(dx&&dy){
+      // 角を少しショートカットしたときだけ、曲がり角として通す（となりの斜め1マスまで）
+      if(Math.abs(dx)>1||Math.abs(dy)>1)break;
+      var h=dx>0?1:3,v=dy>0?2:0,p0=S.pos;
+      if(!S.walls[p0][h]&&!S.walls[p0+dx][v]){step(h);step(v);}
+      else if(!S.walls[p0][v]&&!S.walls[p0+dy*S.n][h]){step(v);step(h);}
+      break;}
+    if(!step(dx?(dx>0?1:3):(dy>0?2:0)))break;}}
 document.addEventListener('keydown',function(e){var m={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3}[e.key];if(m!==undefined){step(m);e.preventDefault();}});
 Array.prototype.forEach.call(document.querySelectorAll('.pad button'),function(b){b.addEventListener('click',function(){step(Number(b.dataset.d));});});
 document.getElementById('go').addEventListener('click',begin);
