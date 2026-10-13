@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Maze Dash</title>
+<style>
+/* layout: full-screen game. Wide screens: side panel (HUD + buttons) left, square maze right. Narrow: HUD on top, maze below. Overlays sit on the maze. */
+:root{--bg:#fff4e4;--surface:#ffffff;--ink:#2a2622;--muted:#6f675e;--line:#ecdcc4;--wall:#2f2b27;--accent:#ff6b3d;--accent-ink:#fff;--trail:#ffb08a;--me:#21b089;--goal:#ffc23a;--dark:#14110e;
+  --font:"Trebuchet MS","Segoe UI",system-ui,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);overscroll-behavior:none}
+.app{position:fixed;inset:0;display:grid;grid-template-columns:minmax(200px,260px) 1fr;gap:16px;padding:16px}
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.logo{font-size:30px;font-weight:900;letter-spacing:.5px;margin:0;line-height:1}
+.logo span{color:var(--accent)}
+.card{background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:12px 14px}
+.lab{font-size:13px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.val{font-size:30px;font-weight:900;font-variant-numeric:tabular-nums}
+.stars{font-size:22px;letter-spacing:2px;color:var(--goal)}
+.stars .off{color:var(--line)}
+.btns{display:flex;flex-direction:column;gap:8px;margin-top:auto}
+button{font:inherit;font-weight:800;font-size:17px;border:0;border-radius:999px;padding:12px 20px;min-height:48px;cursor:pointer;background:var(--accent);color:var(--accent-ink)}
+button.sub{background:var(--surface);color:var(--ink);border:2px solid var(--line)}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.board{position:relative;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center}
+.stage{position:relative;aspect-ratio:1/1;height:100%;max-width:100%;background:var(--surface);border:2px solid var(--line);border-radius:20px;overflow:hidden;touch-action:none}
+canvas{width:100%;height:100%;display:block}
+.over{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;background:rgba(255,250,242,.94)}
+.over[hidden]{display:none}
+.over h2{font-size:34px;margin:0;font-weight:900}
+.over p{margin:0;color:var(--muted);font-size:17px;line-height:1.5}
+.over .big{font-size:52px;font-weight:900;color:var(--ink);font-variant-numeric:tabular-nums}
+.over .stars{font-size:46px}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.levels{display:grid;grid-template-columns:repeat(5,52px);gap:8px;max-height:60%;overflow:auto;padding:4px}
+.levels button{padding:0;min-height:52px;border-radius:12px;font-size:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05}
+.levels button small{font-size:10px;color:var(--goal)}
+.levels button.lock{background:var(--line);color:var(--muted);cursor:default}
+.keys{font-size:13px;color:var(--muted);line-height:1.5}
+.toast{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;padding:8px 16px;border-radius:999px;font-weight:800;font-size:15px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+@media (max-aspect-ratio:1/1){
+  .app{grid-template-columns:1fr;grid-template-rows:auto 1fr;padding:12px}
+  .side{flex-direction:row;flex-wrap:wrap;align-items:stretch;gap:8px}
+  .logo{display:none}.card{padding:8px 12px;flex:1}.val{font-size:22px}.stars{font-size:18px}
+  .btns{flex-direction:row;margin:0}.btns button{min-height:44px;padding:8px 14px;font-size:15px}.keys{display:none}
+  .stage{height:auto;width:100%}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <h1 class="logo">Maze <span>Dash</span></h1>
+    <div class="card"><div class="lab" id="modeLab">Level</div><div class="val" id="lvl">1</div></div>
+    <div class="card"><div class="lab">Time</div><div class="val" id="time">0.0</div><div class="stars" id="liveStars"></div></div>
+    <p class="keys">Drag the green ball along the path, or use arrow keys / WASD.<br>R = restart · Esc = menu</p>
+    <div class="btns"><button class="sub" id="restart" type="button">Restart</button><button class="sub" id="menuBtn" type="button">Menu</button><button class="sub" id="sound" type="button" aria-pressed="true">Sound: On</button></div>
+  </aside>
+  <main class="board">
+    <div class="stage" id="stage">
+      <canvas id="cv"></canvas>
+      <div class="toast" id="toast"></div>
+      <div class="over" id="menu">
+        <h2>Maze <span style="color:var(--accent)">Dash</span></h2>
+        <p>Race the clock through tricky mazes.<br>Faster runs earn more stars.</p>
+        <div class="row"><button id="play" type="button">Play</button><button class="sub" id="daily" type="button">Daily Challenge</button></div>
+        <button class="sub" id="levelsBtn" type="button">Levels</button>
+        <p id="progress"></p>
+      </div>
+      <div class="over" id="levelsOv" hidden>
+        <h2>Levels</h2>
+        <div class="levels" id="levelGrid"></div>
+        <button class="sub" id="levelsBack" type="button">Back</button>
+      </div>
+      <div class="over" id="clear" hidden>
+        <h2 id="clearTitle">Level clear!</h2>
+        <div class="stars" id="clearStars"></div>
+        <div class="big" id="clearTime"></div>
+        <p id="clearNote"></p>
+        <div class="row"><button id="next" type="button">Next</button><button class="sub" id="retry" type="button">Retry</button></div>
+      </div>
+      <div class="over" id="dailyDone" hidden>
+        <h2>Daily done!</h2>
+        <p id="dailyDate"></p>
+        <div class="big" id="dailyTime"></div>
+        <p id="dailyNote"></p>
+        <div class="row"><button id="share" type="button">Copy result</button><button class="sub" id="dailyMenu" type="button">Menu</button></div>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+"use strict";
+// ---------- maze ----------
+function rng(seed){return function(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};}
+// growing tree: half newest, half random cell -> more branches and dead ends
+function makeMaze(cols,rows,seed){var rand=rng(seed),n=cols*rows,walls=[];for(var i=0;i<n;i++)walls.push([1,1,1,1]);
+  var seen=new Uint8Array(n),start=(rand()*n)|0,stack=[start];seen[start]=1;var D=[[0,-1,0,2],[1,0,1,3],[0,1,2,0],[-1,0,3,1]];
+  while(stack.length){var si=rand()<0.5?stack.length-1:(rand()*stack.length)|0,c=stack[si],x=c%cols,y=(c/cols)|0,o=[];
+    for(var d=0;d<4;d++){var nx=x+D[d][0],ny=y+D[d][1];if(nx>=0&&ny>=0&&nx<cols&&ny<rows&&!seen[ny*cols+nx])o.push(d);}
+    if(!o.length){stack.splice(si,1);continue;}var k=o[(rand()*o.length)|0],m=(y+D[k][1])*cols+x+D[k][0];
+    walls[c][D[k][2]]=0;walls[m][D[k][3]]=0;seen[m]=1;stack.push(m);}return walls;}
+var DX=[0,1,0,-1],DY=[-1,0,1,0];
+function pathLen(walls,n){var dist=new Int32Array(n*n).fill(-1),q=[0];dist[0]=0;
+  while(q.length){var c=q.shift();for(var d=0;d<4;d++){if(walls[c][d])continue;var m=c+DX[d]+DY[d]*n;if(dist[m]<0){dist[m]=dist[c]+1;q.push(m);}}}return dist[n*n-1];}
+// ---------- storage (safe) ----------
+var store={get:function(k,f){try{var v=JSON.parse(localStorage.getItem('mazedash-'+k));return v==null?f:v;}catch(e){return f;}},
+  set:function(k,v){try{localStorage.setItem('mazedash-'+k,JSON.stringify(v));}catch(e){}}};
+// ---------- levels ----------
+var LEVELS=60;
+function levelSpec(i){ // i: 0-based
+  var size=Math.min(6+Math.floor(i*0.42),30), dark=(i>=9&&i%5===4), seed=(i+1)*2654435761>>>0;
+  return {size:size,dark:dark,seed:seed};}
+function starsFor(ms,L){var s=ms/1000;if(s<=L*0.13+1)return 3;if(s<=L*0.22+2)return 2;return 1;}
+// ---------- state ----------
+var cv=document.getElementById('cv'),ctx=cv.getContext('2d'),stageEl=document.getElementById('stage');
+var S={mode:'level',idx:0,n:6,walls:null,L:0,dark:false,pos:0,vis:{x:0,y:0},trail:[0],t0:0,elapsed:0,running:false,
+  dailyStep:0,dailyTotal:0,sound:store.get('sound',true)};
+var best=store.get('stars',{}); // idx -> stars
+var bestTime=store.get('times',{});
+function unlocked(){var u=0;while(u<LEVELS&&best[u])u++;return Math.min(u,LEVELS-1);}
+// ---------- sound ----------
+var AC=null;function beep(f,dur,type,vol){if(!S.sound)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+  var o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.value=f;g.gain.value=vol||0.05;o.connect(g);g.connect(AC.destination);
+  var t=AC.currentTime;g.gain.setValueAtTime(vol||0.05,t);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);o.start(t);o.stop(t+dur);}catch(e){}}
+function jingle(){[523,659,784,1047].forEach(function(f,i){setTimeout(function(){beep(f,0.18,'triangle',0.07);},i*90);});}
+// ---------- drawing ----------
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+var COL={};function cols(){['--wall','--trail','--me','--goal','--surface','--dark'].forEach(function(k){COL[k]=css(k);});}
+function fit(){var r=stageEl.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);}
+function geo(){var W=cv.width,pad=W*0.04,cell=(W-pad*2)/S.n;return{pad:pad,cell:cell,W:W};}
+function cc(c,g){return [g.pad+(c%S.n+.5)*g.cell,g.pad+(((c/S.n)|0)+.5)*g.cell];}
+function draw(){if(!S.walls)return;var g=geo(),W=g.W;ctx.fillStyle=COL['--surface'];ctx.fillRect(0,0,W,W);ctx.lineCap='round';ctx.lineJoin='round';
+  // trail
+  ctx.strokeStyle=COL['--trail'];ctx.lineWidth=g.cell*0.34;ctx.beginPath();
+  S.trail.forEach(function(c,i){var p=cc(c,g);i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);});
+  ctx.lineTo(g.pad+(S.vis.x+.5)*g.cell,g.pad+(S.vis.y+.5)*g.cell);ctx.stroke();
+  // goal star (pulses)
+  var gp=cc(S.n*S.n-1,g),r=g.cell*(0.36+0.03*Math.sin(performance.now()/180));ctx.fillStyle=COL['--goal'];ctx.beginPath();
+  for(var i=0;i<10;i++){var a=Math.PI/5*i-Math.PI/2,rr=i%2?r*.45:r;ctx.lineTo(gp[0]+rr*Math.cos(a),gp[1]+rr*Math.sin(a));}ctx.closePath();ctx.fill();
+  // walls
+  ctx.strokeStyle=COL['--wall'];ctx.lineWidth=Math.max(2,g.cell*0.1);ctx.beginPath();
+  S.walls.forEach(function(w,i){var x=g.pad+(i%S.n)*g.cell,y=g.pad+((i/S.n)|0)*g.cell;
+    if(w[0]&&i!==0){ctx.moveTo(x,y);ctx.lineTo(x+g.cell,y);}if(w[1]){ctx.moveTo(x+g.cell,y);ctx.lineTo(x+g.cell,y+g.cell);}
+    if(w[2]){ctx.moveTo(x,y+g.cell);ctx.lineTo(x+g.cell,y+g.cell);}if(w[3]){ctx.moveTo(x,y);ctx.lineTo(x,y+g.cell);}});ctx.stroke();
+  // player
+  var px=g.pad+(S.vis.x+.5)*g.cell,py=g.pad+(S.vis.y+.5)*g.cell;ctx.fillStyle=COL['--me'];ctx.beginPath();ctx.arc(px,py,g.cell*0.3,0,7);ctx.fill();
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(px-g.cell*0.09,py-g.cell*0.09,g.cell*0.08,0,7);ctx.fill();
+  // dark levels: only a circle around you is visible
+  if(S.dark){var rad=g.cell*2.6,inner=rad*0.5;
+    ctx.save();ctx.beginPath();ctx.rect(0,0,W,W);ctx.moveTo(px+rad,py);ctx.arc(px,py,rad,0,Math.PI*2,true);ctx.fillStyle='rgba(20,17,14,0.97)';ctx.fill('evenodd');
+    var grd=ctx.createRadialGradient(px,py,inner,px,py,rad);grd.addColorStop(0,'rgba(20,17,14,0)');grd.addColorStop(1,'rgba(20,17,14,0.97)');
+    ctx.beginPath();ctx.moveTo(px+rad,py);ctx.arc(px,py,rad,0,Math.PI*2);ctx.fillStyle=grd;ctx.fill();ctx.restore();}}
+// ---------- loop ----------
+function loop(){var tx=S.pos%S.n,ty=(S.pos/S.n)|0;S.vis.x+=(tx-S.vis.x)*0.45;S.vis.y+=(ty-S.vis.y)*0.45;
+  if(S.running){S.elapsed=performance.now()-S.t0;hud();}draw();requestAnimationFrame(loop);}
+function fmt(ms){return (ms/1000).toFixed(1);}
+function starStr(n){var s='';for(var i=0;i<3;i++)s+=i<n?'★':'<span class="off">★</span>';return s;}
+function hud(){var t=S.mode==='daily'?S.dailyTotal+S.elapsed:S.elapsed;document.getElementById('time').textContent=fmt(t);
+  document.getElementById('liveStars').innerHTML=S.mode==='level'&&S.L?starStr(starsFor(S.elapsed,S.L)):'';}
+// ---------- flow ----------
+function show(id){['menu','levelsOv','clear','dailyDone'].forEach(function(k){document.getElementById(k).hidden=k!==id;});}
+function load(spec){S.n=spec.size;S.walls=makeMaze(S.n,S.n,spec.seed);S.L=pathLen(S.walls,S.n);S.dark=spec.dark;S.pos=0;S.vis={x:0,y:0};S.trail=[0];
+  S.elapsed=0;S.running=false;fit();hud();}
+function startLevel(i){S.mode='level';S.idx=i;load(levelSpec(i));document.getElementById('modeLab').textContent='Level';
+  document.getElementById('lvl').textContent=(i+1)+(S.dark?' · dark':'');show(null);if(S.dark)toast('Lights out! Find your way in the dark');go();}
+function go(){S.running=true;S.t0=performance.now();}
+var DAILY=[7,10,13,16,19];
+function dayKey(){var d=new Date();return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();}
+function startDaily(){S.mode='daily';S.dailyStep=0;S.dailyTotal=0;document.getElementById('modeLab').textContent='Daily';dailyNext();show(null);go();}
+function dailyNext(){var k=dayKey();load({size:DAILY[S.dailyStep],dark:false,seed:(k*7+S.dailyStep*104729)>>>0});
+  document.getElementById('lvl').textContent=(S.dailyStep+1)+' / 5';}
+function step(d){if(!S.running)return false;if(S.walls[S.pos][d]){return false;}
+  var m=S.pos+DX[d]+DY[d]*S.n;if(S.trail.length>1&&S.trail[S.trail.length-2]===m)S.trail.pop();else S.trail.push(m);
+  S.pos=m;beep(330+((S.trail.length%8)*22),0.04,'square',0.015);if(m===S.n*S.n-1)win();return true;}
+function win(){S.running=false;S.elapsed=performance.now()-S.t0;hud();jingle();
+  if(S.mode==='daily'){S.dailyTotal+=S.elapsed;S.dailyStep++;if(S.dailyStep<5){toast('Maze '+S.dailyStep+' / 5 done!');dailyNext();go();return;}
+    var k=dayKey(),prev=store.get('daily-'+k,null),total=S.dailyTotal;if(prev==null||total<prev)store.set('daily-'+k,total);
+    document.getElementById('dailyDate').textContent=new Date().toDateString();document.getElementById('dailyTime').textContent=fmt(total)+'s';
+    document.getElementById('dailyNote').textContent=prev==null?'Come back tomorrow for 5 new mazes.':(total<prev?'New personal best today!':'Today\'s best: '+fmt(prev)+'s');
+    document.getElementById('time').textContent=fmt(total);show('dailyDone');return;}
+  var st=starsFor(S.elapsed,S.L),i=S.idx,was=best[i]||0;if(st>was){best[i]=st;store.set('stars',best);}
+  if(!bestTime[i]||S.elapsed<bestTime[i]){bestTime[i]=S.elapsed;store.set('times',bestTime);}
+  document.getElementById('clearTitle').textContent=i===LEVELS-1?'You beat every level!':'Level '+(i+1)+' clear!';
+  document.getElementById('clearStars').innerHTML=starStr(st);document.getElementById('clearTime').textContent=fmt(S.elapsed)+'s';
+  var need=st<3?'3 stars: under '+(S.L*0.13+1).toFixed(1)+'s':'Perfect run!';document.getElementById('clearNote').textContent=need+' · Best '+fmt(bestTime[i])+'s';
+  document.getElementById('next').hidden=i>=LEVELS-1;show('clear');}
+function restart(){if(S.mode==='daily'){startDaily();return;}startLevel(S.idx);}
+function menu(){S.running=false;var tot=0;for(var k in best)tot+=best[k];
+  document.getElementById('progress').textContent='Stars: '+tot+' / '+(LEVELS*3)+' · Level '+(unlocked()+1)+' unlocked';show('menu');}
+function levelsGrid(){var h='',u=unlocked();for(var i=0;i<LEVELS;i++){var sp=levelSpec(i),st=best[i]||0;
+    h+=i<=u?'<button type="button" data-i="'+i+'">'+(i+1)+(sp.dark?'☾':'')+'<small>'+'★'.repeat(st)+'</small></button>':'<button type="button" class="lock" disabled aria-label="locked">🔒</button>';}
+  var g=document.getElementById('levelGrid');g.innerHTML=h;show('levelsOv');}
+var toastT=0;function toast(t){var e=document.getElementById('toast');e.textContent=t;e.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){e.classList.remove('on');},1600);}
+// ---------- input ----------
+var drag=null;
+stageEl.addEventListener('pointerdown',function(e){if(!S.running||e.target!==cv)return;drag=e.pointerId;stageEl.setPointerCapture(e.pointerId);follow(e);e.preventDefault();});
+stageEl.addEventListener('pointermove',function(e){if(drag===e.pointerId){follow(e);e.preventDefault();}});
+['pointerup','pointercancel'].forEach(function(t){stageEl.addEventListener(t,function(){drag=null;});});
+function follow(e){var r=cv.getBoundingClientRect(),k=cv.width/r.width,g=geo();
+  var cx=Math.floor(((e.clientX-r.left)*k-g.pad)/g.cell),cy=Math.floor(((e.clientY-r.top)*k-g.pad)/g.cell);
+  for(var guard=0;guard<3&&S.running;guard++){var x=S.pos%S.n,y=(S.pos/S.n)|0,dx=cx-x,dy=cy-y;if(!dx&&!dy)break;
+    if(dx&&dy){if(Math.abs(dx)>1||Math.abs(dy)>1)break;var h=dx>0?1:3,v=dy>0?2:0,p=S.pos;
+      if(!S.walls[p][h]&&!S.walls[p+dx][v]){step(h);step(v);}else if(!S.walls[p][v]&&!S.walls[p+dy*S.n][h]){step(v);step(h);}break;}
+    if(!step(dx?(dx>0?1:3):(dy>0?2:0)))break;}}
+var KEYMAP={ArrowUp:0,KeyW:0,ArrowRight:1,KeyD:1,ArrowDown:2,KeyS:2,ArrowLeft:3,KeyA:3};
+window.addEventListener('keydown',function(e){var d=KEYMAP[e.code];if(d!==undefined){step(d);e.preventDefault();return;}
+  if(e.code==='KeyR'){restart();e.preventDefault();}else if(e.code==='Escape'){menu();}
+  else if((e.code==='Enter'||e.code==='Space')&&!document.getElementById('clear').hidden){document.getElementById(document.getElementById('next').hidden?'retry':'next').click();e.preventDefault();}});
+// ---------- buttons ----------
+function on(id,f){document.getElementById(id).addEventListener('click',function(){beep(660,0.05,'triangle',0.04);f();});}
+on('play',function(){startLevel(unlocked());});
+on('daily',startDaily);on('levelsBtn',levelsGrid);on('levelsBack',menu);
+document.getElementById('levelGrid').addEventListener('click',function(e){var b=e.target.closest('button[data-i]');if(b)startLevel(Number(b.dataset.i));});
+on('next',function(){startLevel(Math.min(S.idx+1,LEVELS-1));});on('retry',restart);on('restart',restart);on('menuBtn',menu);on('dailyMenu',menu);
+on('sound',function(){S.sound=!S.sound;store.set('sound',S.sound);var b=document.getElementById('sound');b.textContent='Sound: '+(S.sound?'On':'Off');b.setAttribute('aria-pressed',S.sound);});
+on('share',function(){var txt='Maze Dash Daily '+new Date().toDateString()+'\n🟩🟩🟩🟩🟩 '+fmt(S.dailyTotal)+'s';
+  if(navigator.clipboard)navigator.clipboard.writeText(txt).then(function(){toast('Copied!');},function(){toast(txt);});else toast(txt);});
+document.getElementById('sound').textContent='Sound: '+(S.sound?'On':'Off');
+window.addEventListener('resize',function(){fit();});
+cols();load(levelSpec(0));menu();loop();
+</script>
+</body>
+</html>
