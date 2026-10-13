@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>きょうのめいろ</title>
+<meta name="description" content="毎日ちがう5つの迷路を、指でなぞって脱出するタイムアタック。みんな同じ迷路なので、タイムをくらべられます。">
+<style>
+/* layout: 上にステージとタイム、中央に正方形の迷路キャンバス、下にボタン。結果は同じ場所に重ねて出す */
+:root{--bg:#fff7ec;--surface:#ffffff;--ink:#2b2b2b;--muted:#6f6a63;--line:#eadfce;--wall:#3a3a3a;--accent:#ff7a45;--accent-ink:#fff;--trail:#ffb08a;--me:#2fb38f;--goal:#ffc93c;
+  --font:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#191714;--surface:#24211d;--ink:#f1ece4;--muted:#b3aca2;--line:#3a352e;--wall:#e9e2d6;--trail:#a8532f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#191714;--surface:#24211d;--ink:#f1ece4;--muted:#b3aca2;--line:#3a352e;--wall:#e9e2d6;--trail:#a8532f;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);overscroll-behavior:none}
+.app{max-width:520px;margin:0 auto;padding:max(12px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;min-height:100%}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+h1{font-size:1.25rem;margin:0}
+.date{font-size:.8rem;color:var(--muted)}
+.hud{display:flex;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 14px}
+.dots{display:flex;gap:6px}.dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--accent);display:block}.dots i.on{background:var(--accent)}
+.time{font-variant-numeric:tabular-nums;font-size:1.4rem;font-weight:800}
+.stage{position:relative;width:100%;aspect-ratio:1/1;background:var(--surface);border:1px solid var(--line);border-radius:18px;touch-action:none;overflow:hidden}
+canvas{width:100%;height:100%;display:block}
+.over{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;text-align:center;background:color-mix(in srgb,var(--surface) 94%,transparent)}
+.over[hidden]{display:none}
+.big{font-size:2.6rem;font-weight:900;font-variant-numeric:tabular-nums;margin:0}
+.over p{margin:0;color:var(--muted);line-height:1.6}
+.over .big{color:var(--ink)}
+button{font:inherit;font-weight:800;border:0;border-radius:999px;padding:12px 22px;min-height:48px;cursor:pointer;background:var(--accent);color:var(--accent-ink)}
+button.sub{background:transparent;color:var(--ink);border:2px solid var(--line)}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.hint{font-size:.8rem;color:var(--muted);text-align:center;margin:0}
+.pad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(2,48px);gap:6px;justify-content:center}
+.pad button{padding:0;min-height:0;border-radius:12px;background:var(--surface);color:var(--ink);border:1px solid var(--line);font-size:1.2rem}
+.pad .u{grid-column:2}.pad .l{grid-column:1;grid-row:2}.pad .d{grid-column:2;grid-row:2}.pad .r{grid-column:3;grid-row:2}
+footer{font-size:.75rem;color:var(--muted);text-align:center;margin-top:auto}
+footer a{color:inherit}
+</style>
+</head>
+<body>
+<div class="app">
+  <header><div><h1>きょうのめいろ</h1><div class="date" id="date"></div></div><button class="sub" id="mode" type="button" style="padding:8px 14px;min-height:40px;font-size:.85rem">れんしゅう</button></header>
+  <div class="hud"><div class="dots" id="dots" aria-label="ステージ"></div><div class="time" id="time" aria-live="off">0.0</div></div>
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+    <div class="over" id="start">
+      <p class="big" style="font-size:1.6rem">5つの迷路を<br>どれだけ早くぬけられる？</p>
+      <p>みどりの玉を指でなぞって、ほしまで動かそう。<br>きょうの迷路は、みんな同じです。</p>
+      <button id="go" type="button">スタート</button>
+      <p id="best"></p>
+    </div>
+    <div class="over" id="done" hidden>
+      <p>ぜんぶクリア！</p>
+      <p class="big" id="result"></p>
+      <p id="rank"></p>
+      <div class="row"><button id="share" type="button">結果をシェア</button><button class="sub" id="again" type="button">もういちど</button></div>
+      <p id="copied" aria-live="polite"></p>
+    </div>
+  </div>
+  <p class="hint">指でなぞる・矢印キー・下のボタン、どれでも動かせます</p>
+  <div class="pad" aria-label="方向ボタン"><button class="u" data-d="0" type="button" aria-label="上">▲</button><button class="l" data-d="3" type="button" aria-label="左">◀</button><button class="d" data-d="2" type="button" aria-label="下">▼</button><button class="r" data-d="1" type="button" aria-label="右">▶</button></div>
+  <footer>HMSUの道具箱 · <a href="../">ほかの道具</a></footer>
+</div>
+<script>
+function rng(seed){return function(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};}
+function makeMaze(cols,rows,seed){var rand=rng(seed),n=cols*rows,walls=[];for(var i=0;i<n;i++)walls.push([1,1,1,1]);
+  var seen=new Uint8Array(n),stack=[0];seen[0]=1;var D=[[0,-1,0,2],[1,0,1,3],[0,1,2,0],[-1,0,3,1]];
+  while(stack.length){var c=stack[stack.length-1],x=c%cols,y=(c/cols)|0,o=[];
+    for(var d=0;d<4;d++){var nx=x+D[d][0],ny=y+D[d][1];if(nx>=0&&ny>=0&&nx<cols&&ny<rows&&!seen[ny*cols+nx])o.push(d);}
+    if(!o.length){stack.pop();continue;}var k=o[(rand()*o.length)|0],m=(y+D[k][1])*cols+x+D[k][0];
+    walls[c][D[k][2]]=0;walls[m][D[k][3]]=0;seen[m]=1;stack.push(m);}return walls;}
+var SIZES=[6,8,10,12,14], DX=[0,1,0,-1], DY=[-1,0,1,0];
+var store={get:function(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}},set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+var today=new Date(), key=today.getFullYear()*10000+(today.getMonth()+1)*100+today.getDate();
+var dayNo=Math.floor((Date.UTC(today.getFullYear(),today.getMonth(),today.getDate())-Date.UTC(2026,9,14))/864e5)+1;
+document.getElementById('date').textContent=(today.getMonth()+1)+'月'+today.getDate()+'日 · No.'+dayNo;
+var cv=document.getElementById('cv'),ctx=cv.getContext('2d'),stageEl=document.getElementById('stage');
+var S={practice:false,lv:0,walls:null,n:0,pos:0,trail:[],t0:0,running:false,total:0,seedBase:key};
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function fit(){var r=stageEl.getBoundingClientRect(),dpr=window.devicePixelRatio||1;cv.width=r.width*dpr;cv.height=r.height*dpr;draw();}
+function load(){S.n=SIZES[S.lv];S.walls=makeMaze(S.n,S.n,(S.seedBase*7+S.lv*104729)>>>0);S.pos=0;S.trail=[0];dots();draw();}
+function dots(){var h='';for(var i=0;i<5;i++)h+='<i class="'+(i<S.lv?'on':'')+'"></i>';document.getElementById('dots').innerHTML=h;}
+function geo(){var W=cv.width,pad=W*0.05,cell=(W-pad*2)/S.n;return{pad:pad,cell:cell};}
+function draw(){if(!S.walls)return;var g=geo(),W=cv.width;ctx.clearRect(0,0,W,W);
+  ctx.lineCap='round';ctx.lineJoin='round';
+  // 足あと
+  ctx.strokeStyle=css('--trail');ctx.lineWidth=g.cell*0.35;ctx.beginPath();
+  S.trail.forEach(function(c,i){var x=g.pad+(c%S.n+.5)*g.cell,y=g.pad+(((c/S.n)|0)+.5)*g.cell;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
+  // ゴールのほし
+  var gx=g.pad+(S.n-.5)*g.cell,gy=g.pad+(S.n-.5)*g.cell,r=g.cell*0.36;ctx.fillStyle=css('--goal');ctx.beginPath();
+  for(var i=0;i<10;i++){var a=Math.PI/5*i-Math.PI/2,rr=i%2?r*.45:r;ctx.lineTo(gx+rr*Math.cos(a),gy+rr*Math.sin(a));}ctx.closePath();ctx.fill();
+  // 壁
+  ctx.strokeStyle=css('--wall');ctx.lineWidth=Math.max(2,g.cell*0.1);ctx.beginPath();
+  S.walls.forEach(function(w,i){var x=g.pad+(i%S.n)*g.cell,y=g.pad+((i/S.n)|0)*g.cell;
+    if(w[0]){ctx.moveTo(x,y);ctx.lineTo(x+g.cell,y);}if(w[1]){ctx.moveTo(x+g.cell,y);ctx.lineTo(x+g.cell,y+g.cell);}
+    if(w[2]){ctx.moveTo(x,y+g.cell);ctx.lineTo(x+g.cell,y+g.cell);}if(w[3]){ctx.moveTo(x,y);ctx.lineTo(x,y+g.cell);}});ctx.stroke();
+  // 自分
+  var px=g.pad+(S.pos%S.n+.5)*g.cell,py=g.pad+(((S.pos/S.n)|0)+.5)*g.cell;ctx.fillStyle=css('--me');ctx.beginPath();ctx.arc(px,py,g.cell*0.3,0,7);ctx.fill();}
+function step(d){if(!S.running)return false;if(S.walls[S.pos][d])return false;
+  var x=S.pos%S.n+DX[d],y=((S.pos/S.n)|0)+DY[d],m=y*S.n+x;
+  if(S.trail.length>1&&S.trail[S.trail.length-2]===m)S.trail.pop();else S.trail.push(m);
+  S.pos=m;if(m===S.n*S.n-1)clear();return true;}
+function clear(){S.lv++;if(navigator.vibrate)try{navigator.vibrate(30);}catch(e){}
+  if(S.lv>=5){finish();return;}load();}
+function fmt(ms){return (ms/1000).toFixed(1);}
+function tick(){if(!S.running)return;document.getElementById('time').textContent=fmt(performance.now()-S.t0);draw();requestAnimationFrame(tick);}
+function begin(){S.lv=0;S.running=true;document.getElementById('start').hidden=true;document.getElementById('done').hidden=true;load();S.t0=performance.now();tick();}
+function finish(){S.running=false;var ms=performance.now()-S.t0;S.total=ms;document.getElementById('time').textContent=fmt(ms);dots();
+  document.getElementById('result').textContent=fmt(ms)+' 秒';var rank='';
+  if(!S.practice){var k='meiro-day-'+key,b=store.get(k);if(!b||ms<b){store.set(k,ms);rank=b?'じこベスト更新！（前は '+fmt(b)+' 秒）':'きょうの記録です';}else rank='きょうのベストは '+fmt(b)+' 秒';
+    var st=store.get('meiro-streak')||{last:0,n:0};if(st.last!==key){st.n=(st.last===prevKey()?st.n:0)+1;st.last=key;store.set('meiro-streak',st);}rank+=' · '+st.n+'日れんぞく';}
+  else rank='れんしゅうモード';
+  document.getElementById('rank').textContent=rank;document.getElementById('copied').textContent='';document.getElementById('done').hidden=false;}
+function prevKey(){var d=new Date(today);d.setDate(d.getDate()-1);return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();}
+function showBest(){var b=store.get('meiro-day-'+key);document.getElementById('best').textContent=S.practice?'れんしゅうは毎回ちがう迷路です':(b?'きょうのベスト：'+fmt(b)+' 秒':'');}
+// なぞり操作：指の位置へ向かって1マスずつ進む
+var drag=null;
+stageEl.addEventListener('pointerdown',function(e){if(!S.running)return;drag={id:e.pointerId};stageEl.setPointerCapture(e.pointerId);follow(e);e.preventDefault();});
+stageEl.addEventListener('pointermove',function(e){if(drag&&drag.id===e.pointerId){follow(e);e.preventDefault();}});
+['pointerup','pointercancel'].forEach(function(t){stageEl.addEventListener(t,function(){drag=null;});});
+function follow(e){var r=cv.getBoundingClientRect(),dpr=cv.width/r.width,g=geo();
+  var cx=Math.floor(((e.clientX-r.left)*dpr-g.pad)/g.cell),cy=Math.floor(((e.clientY-r.top)*dpr-g.pad)/g.cell);
+  for(var guard=0;guard<4&&S.running;guard++){var x=S.pos%S.n,y=(S.pos/S.n)|0,dx=cx-x,dy=cy-y;if(!dx&&!dy)break;
+    var h=dx?(dx>0?1:3):-1,v=dy?(dy>0?2:0):-1,order=Math.abs(dx)>=Math.abs(dy)?[h,v]:[v,h],moved=false;
+    for(var j=0;j<2&&!moved;j++)if(order[j]>=0)moved=step(order[j]);
+    if(!moved)break;}}
+document.addEventListener('keydown',function(e){var m={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3}[e.key];if(m!==undefined){step(m);e.preventDefault();}});
+Array.prototype.forEach.call(document.querySelectorAll('.pad button'),function(b){b.addEventListener('click',function(){step(Number(b.dataset.d));});});
+document.getElementById('go').addEventListener('click',begin);
+document.getElementById('again').addEventListener('click',function(){if(S.practice)S.seedBase=(Math.random()*4294967296)>>>0;begin();});
+document.getElementById('mode').addEventListener('click',function(){S.practice=!S.practice;S.running=false;this.textContent=S.practice?'きょうの迷路':'れんしゅう';
+  S.seedBase=S.practice?(Math.random()*4294967296)>>>0:key;S.lv=0;load();document.getElementById('time').textContent='0.0';document.getElementById('done').hidden=true;document.getElementById('start').hidden=false;showBest();});
+document.getElementById('share').addEventListener('click',function(){
+  var txt='きょうのめいろ No.'+dayNo+'\n🟩🟩🟩🟩🟩 '+fmt(S.total)+'秒'+(S.practice?'（れんしゅう）':'')+'\n',url=location.href.split('#')[0];
+  if(navigator.share){navigator.share({text:txt,url:url}).catch(function(){});return;}
+  var done=function(){document.getElementById('copied').textContent='結果をコピーしました';};
+  if(navigator.clipboard)navigator.clipboard.writeText(txt+url).then(done,function(){});});
+window.addEventListener('resize',fit);
+if(window.matchMedia)window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);
+load();fit();showBest();
+</script>
+</body>
+</html>
