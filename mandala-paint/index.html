@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Mandala by Numbers</title>
+<style>
+/* layout: top bar (title, progress, buttons); big round canvas center; palette strip at bottom (right column on wide screens). */
+:root{--bg:#fbf7f2;--ink:#2f2a33;--muted:#857d89;--card:#ffffff;--line:#ece3d8;--accent:#7a5cff;--font:"Trebuchet MS","Segoe UI",system-ui,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--font)}
+.app{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr auto;padding:12px 16px max(12px,env(safe-area-inset-bottom));gap:10px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.logo{font-weight:900;font-size:21px;margin-right:auto}.logo span{color:var(--accent)}
+.prog{width:120px;height:10px;border-radius:5px;background:var(--line);overflow:hidden}.prog b{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+button{font:inherit;font-weight:800;border:0;border-radius:999px;padding:10px 20px;min-height:44px;cursor:pointer;background:var(--accent);color:#fff;font-size:16px}
+button.sub{background:var(--card);color:var(--ink);border:2px solid var(--line)}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.stage{position:relative;min-height:0;touch-action:none}
+canvas#cv{position:absolute;inset:0;width:100%;height:100%}
+.pal{display:flex;gap:8px;flex-wrap:wrap;padding:4px 2px;justify-content:center}
+.sw{flex:0 0 auto;width:50px;height:50px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px var(--line);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;cursor:pointer;position:relative;padding:0;min-height:0}
+.sw.on{box-shadow:0 0 0 4px var(--ink);transform:scale(1.08)}
+.sw.done{opacity:.35}.sw.done::after{content:"✓";position:absolute;font-size:22px}
+.over{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;background:rgba(251,247,242,.96)}
+.over[hidden]{display:none}
+h1{font-size:clamp(38px,8vw,66px);margin:0;font-weight:900}h1 span{color:var(--accent)}
+h2{font-size:32px;margin:0}
+p{margin:0;color:var(--muted);font-size:17px;line-height:1.5}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.gal{display:grid;grid-template-columns:repeat(5,96px);gap:10px;max-height:62vh;overflow:auto;padding:6px}
+.gal button{padding:0;width:96px;height:96px;border-radius:16px;background:var(--card);border:2px solid var(--line);position:relative;overflow:hidden;min-height:0}
+.gal button canvas{width:100%;height:100%;display:block}
+.gal button span{position:absolute;left:6px;top:4px;font-size:12px;color:var(--muted);font-weight:800}
+.gal button.lock{background:var(--line);cursor:default}
+@media (max-width:560px){.gal{grid-template-columns:repeat(3,96px)}}
+@media (min-aspect-ratio:4/3){.app{grid-template-columns:1fr 132px;grid-template-rows:auto 1fr}.top{grid-column:1 / span 2}.pal{flex-direction:column;flex-wrap:wrap;overflow:auto;justify-content:center;align-content:center}}
+.toast{position:fixed;top:72px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 16px;border-radius:999px;font-weight:800;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="logo">Mandala <span>by Numbers</span></div>
+    <div class="prog" aria-label="progress"><b id="bar"></b></div>
+    <button class="sub" id="zout" type="button" aria-label="Zoom out">−</button><button class="sub" id="zin" type="button" aria-label="Zoom in">+</button><button class="sub" id="hintBtn" type="button">🔍 Find</button>
+    <button class="sub" id="galBtn" type="button">Gallery</button>
+  </div>
+  <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+  <div class="pal" id="pal"></div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="over" id="menu">
+  <h1>Mandala <span>by Numbers</span></h1>
+  <p>Pick a color, then tap or drag over the matching numbers.<br>Pinch or use + / − to zoom in on small pieces.<br>Every mandala is one of a kind. Relax and fill them all.</p>
+  <div class="row"><button id="play" type="button">Play</button><button class="sub" id="galBtn2" type="button">Gallery</button></div>
+  <p id="prog2"></p>
+</div>
+<div class="over" id="gallery" hidden><h2>Gallery</h2><div class="gal" id="gal"></div><button class="sub" id="galBack" type="button">Back</button></div>
+<div class="over" id="done" hidden style="background:rgba(251,247,242,.6)"><h2>Beautiful!</h2><p id="doneP"></p><div class="row"><button id="next" type="button">Next mandala</button><button class="sub" id="doneGal" type="button">Gallery</button></div></div>
+<script>
+"use strict";
+// ---------- mandala generator ----------
+function rng(s){return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+function hsl(h,s,l){h=((h%360)+360)%360;s/=100;l/=100;var k=function(n){return (n+h/30)%12;},a=s*Math.min(l,1-l),f=function(n){return l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));};
+  var to=function(x){return ('0'+Math.round(x*255).toString(16)).slice(-2);};return '#'+to(f(0))+to(f(8))+to(f(4));}
+function lum(hex){var n=parseInt(hex.slice(1),16);return (0.299*(n>>16)+0.587*(n>>8&255)+0.114*(n&255))/255;}
+var TOTAL=40;
+function makeMandala(i){var r=rng((i+7)*2246822519>>>0),fold=[6,8,10,12,6,8][i%6],rings=Math.min(4+Math.floor(i/4),9),ncol=Math.min(4+Math.floor(i/3),10);
+  // palette: harmonious scheme
+  var base=r()*360,span=150+r()*150,pal=[];
+  for(var c=0;c<ncol;c++){var h=base+span*c/Math.max(1,ncol-1),l=[50,72,38,62,82,44][c%6],s=60+r()*25;pal.push(hsl(h,s,l));}
+  for(var c2=pal.length-1;c2>0;c2--){var j2=(r()*(c2+1))|0,tmp=pal[c2];pal[c2]=pal[j2];pal[j2]=tmp;}
+  // ring radii (inner rings thicker so cells stay tappable)
+  var radii=[0],c0=Math.max(0.1,0.22-rings*0.012);for(var k=1;k<=rings;k++)radii.push(c0+(1-c0)*(k-1)/(rings-1||1));radii[1]=c0;
+  var cells=[];
+  for(var ring=0;ring<rings;ring++){var r0=radii[ring],r1=radii[ring+1],mid=(r0+r1)/2,arc=2*Math.PI*mid/((r1-r0)*1.5);
+    var per=ring===0?1:Math.max(1,Math.round(arc/fold));var n=ring===0?1:per*fold;
+    // color pattern: symmetric within each fold, mirrored
+    var pattern=[];for(var q=0;q<Math.ceil(per/2);q++)pattern.push((r()*ncol)|0);
+    var petal=r()<0.5; // petal rings get a different inner/outer shape
+    for(var s=0;s<n;s++){var j=s%per,m=Math.min(j,per-1-j),col=ring===0?(r()*ncol)|0:pattern[m];
+      cells.push({ring:ring,r0:r0,r1:r1,a0:s/n*Math.PI*2-Math.PI/2,a1:(s+1)/n*Math.PI*2-Math.PI/2,c:col,petal:petal&&ring>0&&per<=2,filled:false});}
+    if(ring===0)cells[cells.length-1].center=true;}
+  // drop colors that are not used and renumber
+  var used=[];cells.forEach(function(c){if(used.indexOf(c.c)<0)used.push(c.c);});used.sort(function(a,b){return a-b;});
+  cells.forEach(function(c){c.c=used.indexOf(c.c);});pal=used.map(function(u){return pal[u];});
+  return {i:i,cells:cells,pal:pal,rings:rings};}
+// ---------- storage ----------
+var store={get:function(k,f){try{var v=JSON.parse(localStorage.getItem('mandala-'+k));return v==null?f:v;}catch(e){return f;}},set:function(k,v){try{localStorage.setItem('mandala-'+k,JSON.stringify(v));}catch(e){}}};
+var done=store.get('done',{}),saved=store.get('wip',null);
+function unlocked(){var u=0;while(u<TOTAL&&done[u])u++;return Math.min(u,TOTAL-1);}
+// ---------- sound ----------
+var AC=null;function tone(f,d,v){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(v||0.04,t);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d);}catch(e){}}
+var SCALE=[523,587,659,784,880,1047,1175,1319];
+// ---------- state ----------
+var view={s:1,x:0,y:0},M=null,sel=0,cv=document.getElementById('cv'),ctx=cv.getContext('2d'),stage=document.getElementById('stage'),W=0,H=0,flash=null,finishT=0;
+function fit(){var b=stage.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);W=b.width;H=b.height;cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0);}
+addEventListener('resize',fit);
+function load(i){M=makeMandala(i);if(saved&&saved.i===i)saved.f.forEach(function(k){if(M.cells[k])M.cells[k].filled=true;});
+  view={s:1,x:0,y:0};sel=firstOpen();buildPal();['menu','gallery','done'].forEach(function(k){document.getElementById(k).hidden=true;});finishT=0;fit();prog();
+  if(i===0)toast('Pick a color, then tap its numbers');}
+function firstOpen(){for(var c=0;c<M.pal.length;c++)if(left(c))return c;return 0;}
+function left(c){return M.cells.filter(function(x){return x.c===c&&!x.filled;}).length;}
+function buildPal(){var h='';M.pal.forEach(function(col,k){h+='<button type="button" class="sw'+(k===sel?' on':'')+(left(k)?'':' done')+'" data-k="'+k+'" style="background:'+col+';color:'+(lum(col)>0.6?'#2f2a33':'#fff')+'" aria-label="color '+(k+1)+'">'+(left(k)?k+1:'')+'</button>';});
+  document.getElementById('pal').innerHTML=h;}
+function prog(){var f=M.cells.filter(function(c){return c.filled;}).length;document.getElementById('bar').style.width=(f/M.cells.length*100)+'%';}
+function save(){var f=[];M.cells.forEach(function(c,k){if(c.filled)f.push(k);});saved={i:M.i,f:f};store.set('wip',saved);}
+// ---------- geometry ----------
+function geo(){var R=Math.min(W,H)/2-10;return {cx:W/2,cy:H/2,R:R};}
+function path(c,g){var cx=g.cx,cy=g.cy,R=g.R;ctx.beginPath();
+  if(c.center){ctx.arc(cx,cy,c.r1*R,0,7);return;}
+  ctx.arc(cx,cy,c.r1*R,c.a0,c.a1);ctx.arc(cx,cy,c.r0*R,c.a1,c.a0,true);ctx.closePath();}
+function hit(x,y){x=(x-view.x)/view.s;y=(y-view.y)/view.s;var g=geo(),dx=x-g.cx,dy=y-g.cy,d=Math.hypot(dx,dy)/g.R;if(d>1)return -1;var a=Math.atan2(dy,dx);
+  for(var k=0;k<M.cells.length;k++){var c=M.cells[k];if(d<c.r0||d>=c.r1)continue;if(c.center)return k;
+    var a0=c.a0,a1=c.a1,aa=a;while(aa<a0)aa+=Math.PI*2;while(aa>=a0+Math.PI*2)aa-=Math.PI*2;if(aa<a1)return k;}return -1;}
+// ---------- draw ----------
+function drawMandala(context,m,size,showNums,selC,t){var g={cx:size/2,cy:size/2,R:size/2-4},save=ctx;ctx=context;
+  m.cells.forEach(function(c){path(c,g);var col=m.pal[c.c];
+    if(c.filled){ctx.fillStyle=col;ctx.fill();}
+    else{ctx.fillStyle=selC===c.c?'rgba(122,92,255,'+(0.16+0.08*Math.sin(t/220))+')':'#ffffff';ctx.fill();}
+    ctx.strokeStyle=c.filled?'rgba(255,255,255,.55)':'#d8cfc4';ctx.lineWidth=c.filled?1:1.2;ctx.stroke();});
+  if(showNums){ctx.textAlign='center';ctx.textBaseline='middle';m.cells.forEach(function(c){if(c.filled)return;var mid=(c.r0+c.r1)/2*g.R,am=(c.a0+c.a1)/2,
+      w=c.center?c.r1*g.R*1.4:Math.min((c.r1-c.r0)*g.R,(c.a1-c.a0)*mid);var fs=Math.max(7,Math.min(18,w*0.48));if(fs*view.s<8&&selC!==c.c)return;
+      var x=c.center?g.cx:g.cx+Math.cos(am)*mid,y=c.center?g.cy:g.cy+Math.sin(am)*mid;ctx.fillStyle=selC===c.c?'#3b2a99':'#9a8f9e';ctx.font='800 '+fs+'px Trebuchet MS,sans-serif';ctx.fillText(c.c+1,x,y);});}
+  ctx=save;}
+function draw(t){ctx.clearRect(0,0,W,H);if(M){var g=geo();ctx.save();ctx.translate(view.x,view.y);ctx.scale(view.s,view.s);ctx.translate(g.cx-g.R-4,g.cy-g.R-4);
+    if(finishT){var k=Math.min(1,(t-finishT)/900);ctx.translate(g.R+4,g.R+4);ctx.rotate(k*k*0.25);ctx.scale(1+0.04*Math.sin(k*Math.PI),1+0.04*Math.sin(k*Math.PI));ctx.translate(-g.R-4,-g.R-4);}
+    drawMandala(ctx,M,(g.R+4)*2,!finishT,finishT?-1:sel,t);ctx.restore();
+    if(flash){var a=1-(t-flash.t)/400;if(a>0){ctx.save();ctx.translate(view.x,view.y);ctx.scale(view.s,view.s);ctx.translate(g.cx-g.R-4,g.cy-g.R-4);var gg={cx:g.R+4,cy:g.R+4,R:g.R};path(M.cells[flash.k],gg);ctx.strokeStyle='rgba(230,70,90,'+a+')';ctx.lineWidth=3;ctx.stroke();ctx.restore();}else flash=null;}}
+  requestAnimationFrame(draw);}
+// ---------- painting ----------
+var painting=false,streak=0;
+function paintAt(e){var b=cv.getBoundingClientRect(),k=hit(e.clientX-b.left,e.clientY-b.top);if(k<0)return;var c=M.cells[k];if(c.filled)return;
+  if(c.c===sel){c.filled=true;streak++;tone(SCALE[streak%8],0.18,0.035);prog();if(!left(sel)){tone(1047,0.3,0.05);buildPal();var n=firstOpen();if(left(n)){sel=n;buildPal();}}
+    if(M.cells.every(function(x){return x.filled;}))finish();}
+  else if(!painting||e.type==='pointerdown'){flash={k:k,t:performance.now()};streak=0;tone(180,0.1,0.03);}}
+var ptrs={},pinch=null;
+function zoomAt(px,py,ns){ns=Math.max(1,Math.min(5,ns));view.x=px-(px-view.x)*ns/view.s;view.y=py-(py-view.y)*ns/view.s;view.s=ns;clampView();}
+function clampView(){if(view.s<=1){view.s=1;view.x=0;view.y=0;return;}view.x=Math.min(W*0.4,Math.max(W*0.6-W*view.s,view.x));view.y=Math.min(H*0.4,Math.max(H*0.6-H*view.s,view.y));}
+function local(e){var b=stage.getBoundingClientRect();return {x:e.clientX-b.left,y:e.clientY-b.top};}
+stage.addEventListener('pointerdown',function(e){if(!M||finishT)return;stage.setPointerCapture(e.pointerId);ptrs[e.pointerId]=local(e);var ids=Object.keys(ptrs);
+  if(ids.length===2){if(painting){painting=false;save();}var a=ptrs[ids[0]],b=ptrs[ids[1]];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),s:view.s,mx:(a.x+b.x)/2,my:(a.y+b.y)/2,vx:view.x,vy:view.y};return;}
+  if(ids.length===1){painting=true;paintAt(e);}});
+stage.addEventListener('pointermove',function(e){if(!ptrs[e.pointerId])return;ptrs[e.pointerId]=local(e);var ids=Object.keys(ptrs);
+  if(pinch&&ids.length>=2){var a=ptrs[ids[0]],b=ptrs[ids[1]],d=Math.hypot(a.x-b.x,a.y-b.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
+    view.s=pinch.s;view.x=pinch.vx+(mx-pinch.mx);view.y=pinch.vy+(my-pinch.my);zoomAt(mx,my,pinch.s*d/pinch.d);return;}
+  if(painting)paintAt(e);});
+['pointerup','pointercancel'].forEach(function(t){stage.addEventListener(t,function(e){delete ptrs[e.pointerId];if(Object.keys(ptrs).length<2)pinch=null;if(painting){painting=false;if(M&&!finishT)save();}});});
+stage.addEventListener('wheel',function(e){e.preventDefault();var p=local(e);zoomAt(p.x,p.y,view.s*(e.deltaY<0?1.15:1/1.15));},{passive:false});
+document.getElementById('pal').addEventListener('click',function(e){var b=e.target.closest('.sw');if(!b)return;sel=Number(b.dataset.k);buildPal();tone(660,0.06,0.03);});
+addEventListener('keydown',function(e){if(!M)return;var n=Number(e.key);if(n>=1&&n<=M.pal.length){sel=n-1;buildPal();}if(e.key==='0'&&M.pal.length>=10){sel=9;buildPal();}});
+function finish(){finishT=performance.now();view={s:1,x:0,y:0};done[M.i]=1;store.set('done',done);saved=null;store.set('wip',null);
+  [523,659,784,1047,1319].forEach(function(f,k){setTimeout(function(){tone(f,0.35,0.05);},k*110);});
+  setTimeout(function(){var c=0;for(var k in done)c++;document.getElementById('doneP').textContent='Mandala '+(M.i+1)+' complete · '+c+' / '+TOTAL+' in your gallery';
+    document.getElementById('next').hidden=M.i>=TOTAL-1;document.getElementById('done').hidden=false;},1300);}
+document.getElementById('zin').addEventListener('click',function(){zoomAt(W/2,H/2,view.s*1.5);});document.getElementById('zout').addEventListener('click',function(){zoomAt(W/2,H/2,view.s/1.5);});
+document.getElementById('hintBtn').addEventListener('click',function(){if(!M||finishT)return;var ks=[];M.cells.forEach(function(c,k){if(c.c===sel&&!c.filled)ks.push(k);});
+  if(!ks.length){toast('All done for this color');return;}toast(ks.length+' left for color '+(sel+1));flash=null;pulse=ks;pulseT=performance.now();});
+var pulse=null,pulseT=0;
+function drawPulse(t){if(pulse&&M){var a=1-(t-pulseT)/1600;if(a>0){var g=geo();ctx.save();ctx.translate(view.x,view.y);ctx.scale(view.s,view.s);ctx.translate(g.cx-g.R-4,g.cy-g.R-4);var gg={cx:g.R+4,cy:g.R+4,R:g.R};
+    pulse.forEach(function(k){if(M.cells[k].filled)return;path(M.cells[k],gg);ctx.strokeStyle='rgba(122,92,255,'+a+')';ctx.lineWidth=4;ctx.stroke();});ctx.restore();}else pulse=null;}requestAnimationFrame(drawPulse);}
+requestAnimationFrame(drawPulse);
+var tt=0;function toast(m){var e=document.getElementById('toast');e.textContent=m;e.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){e.classList.remove('on');},2200);}
+// ---------- gallery ----------
+function gallery(){var g=document.getElementById('gal');g.innerHTML='';var u=unlocked();
+  for(var i=0;i<TOTAL;i++){var b=document.createElement('button');b.type='button';
+    if(i>u&&!done[i]){b.className='lock';b.disabled=true;b.setAttribute('aria-label','locked');b.innerHTML='<span>'+(i+1)+'</span>';g.appendChild(b);continue;}
+    var c=document.createElement('canvas');c.width=c.height=192;var m=makeMandala(i);
+    if(done[i])m.cells.forEach(function(x){x.filled=true;});else if(saved&&saved.i===i)saved.f.forEach(function(k){if(m.cells[k])m.cells[k].filled=true;});
+    drawMandala(c.getContext('2d'),m,192,false,-1,0);b.appendChild(c);var s=document.createElement('span');s.textContent=(i+1)+(done[i]?' ✓':'');b.appendChild(s);
+    b.dataset.i=i;b.setAttribute('aria-label','Mandala '+(i+1));g.appendChild(b);}
+  ['menu','done'].forEach(function(k){document.getElementById(k).hidden=true;});document.getElementById('gallery').hidden=false;}
+document.getElementById('gal').addEventListener('click',function(e){var b=e.target.closest('button[data-i]');if(b)load(Number(b.dataset.i));});
+document.getElementById('galBtn').addEventListener('click',gallery);document.getElementById('galBtn2').addEventListener('click',gallery);document.getElementById('doneGal').addEventListener('click',gallery);
+document.getElementById('galBack').addEventListener('click',function(){if(M&&!finishT)document.getElementById('gallery').hidden=true;else menu();});
+document.getElementById('play').addEventListener('click',function(){load(saved?saved.i:unlocked());});
+document.getElementById('next').addEventListener('click',function(){load(Math.min(M.i+1,TOTAL-1));});
+function menu(){var c=0;for(var k in done)c++;document.getElementById('prog2').textContent=c?c+' / '+TOTAL+' mandalas completed':'';document.getElementById('menu').hidden=false;}
+fit();menu();requestAnimationFrame(draw);
+</script>
+</body>
+</html>
