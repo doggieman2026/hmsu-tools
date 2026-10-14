@@ -45,9 +45,9 @@ button:focus-visible{outline:3px solid #fff;outline-offset:3px}
 <div class="over" id="menu">
   <h1>TIME FLOCK</h1>
   <div class="rules">
-    <div class="rule"><b>⏸ Time moves when you move</b><span>Stand still and the world slows to a crawl. Find your gap, then go.</span></div>
+    <div class="rule"><b>⏸ Time moves when you move</b><span>Stop for a moment and the world slows down. Find your gap, then go.</span></div>
     <div class="rule"><b>✦ Enemies join your flock</b><span>Every enemy you destroy turns and fights for you.</span></div>
-    <div class="rule"><b>⚠ A bigger flock is a bigger target</b><span>Bullets knock allies out of the flock. Protect your core.</span></div>
+    <div class="rule"><b>⚠ A bigger flock is a bigger target</b><span>Your core grows with the flock and enemies get tougher. Get hit and a third of your flock scatters.</span></div>
   </div>
   <button id="start" type="button">Play</button>
   <p class="keys">Move the mouse or drag to fly · arrows / WASD · P = pause</p>
@@ -84,7 +84,7 @@ function nextWave(){G.wave++;var w=G.wave,mul=1+w*0.1;banner('Wave '+w);sfx('wav
   if(w%5===0){var lvl=w/5,hp=150*lvl*(1+lvl*0.5);G.boss={x:W/2,y:-20*U,r:11*U,hp:hp,max:hp,t:0,pat:0,patT:0,fire:0,hitT:0,lvl:lvl};banner('BOSS');sfx('boss');return;}
   var types=['drone'];if(w>=2)types.push('weaver');if(w>=3)types.push('gunner');if(w>=4)types.push('dasher');if(w>=6)types.push('tank');
   G.queue=[];var n=6+w*2;for(var i=0;i<n;i++)G.queue.push({k:types[(Math.random()*types.length)|0],at:i*Math.max(0.35,1-w*0.05),m:mul});G.spawnT=0;}
-function spawn(q){var K=KIND[q.k],e={k:q.k,x:(0.08+Math.random()*0.84)*W,y:-5*U,r:K.r*U,hp:K.hp*q.m,max:K.hp*q.m,t:0,ph:Math.random()*6,fire:1+Math.random()*1.5,hitT:0,vx:0,vy:K.sp*U};
+function spawn(q){var K=KIND[q.k],fm=1+G.flock.length*0.025;q={k:q.k,m:q.m*fm};var e={k:q.k,x:(0.08+Math.random()*0.84)*W,y:-5*U,r:K.r*U,hp:K.hp*q.m,max:K.hp*q.m,t:0,ph:Math.random()*6,fire:1+Math.random()*1.5,hitT:0,vx:0,vy:K.sp*U};
   if(q.k==='dasher'){var a=Math.atan2(G.p.y-e.y,G.p.x-e.x);e.vx=Math.cos(a)*K.sp*U;e.vy=Math.sin(a)*K.sp*U;}G.enemies.push(e);}
 // ---------- helpers ----------
 function banner(t){G.banner=t;G.bannerT=1.5;}
@@ -107,7 +107,8 @@ function allyFire(a){var c=KIND[a.k].col;
   else{a.fire=2.0;for(var i=-2;i<=2;i++)shoot(a.x,a.y,i*0.18,80,1.6,c,1);}}
 // ---------- damage ----------
 function kill(e){var K=KIND[e.k];G.score+=Math.round(K.pts*(1+G.flock.length*0.05));burst(e.x,e.y,K.col,16,40);ring(e.x,e.y,K.col,e.r*3);G.shake=Math.max(G.shake,e.k==='tank'?8:3);sfx('boom');recruit(e);}
-function hurt(){var p=G.p;if(p.inv>0)return;p.hp--;p.inv=1.5;G.shake=14;G.flash=0.35;sfx('hurt');burst(p.x,p.y,'#fff',24,50);G.ebullets=G.ebullets.filter(function(b){return d2(b,p)>400*U*U;});if(p.hp<=0)gameOver();}
+function coreR(){return (1+Math.min(G.flock.length,36)*0.04)*U;}
+function hurt(){var p=G.p;if(p.inv>0)return;p.hp--;var lose=Math.ceil(G.flock.length/3);for(var i=0;i<lose;i++)loseAlly(G.flock.length-1);p.inv=1.5;G.shake=14;G.flash=0.35;sfx('hurt');burst(p.x,p.y,'#fff',24,50);G.ebullets=G.ebullets.filter(function(b){return d2(b,p)>400*U*U;});if(p.hp<=0)gameOver();}
 function gameOver(){G.state='over';if(G.score>hi){hi=G.score;store.set('hi',hi);}
   document.getElementById('final').textContent='Score '+G.score+' · Wave '+G.wave+' · Biggest flock '+G.maxFlock+(G.score>=hi&&G.score>0?' · New best!':' · Best '+hi);
   setTimeout(function(){document.getElementById('over').hidden=false;['hud','meter','pauseBtn'].forEach(function(k){document.getElementById(k).hidden=true;});},700);}
@@ -121,7 +122,8 @@ function update(dt){var p=G.p;G.t+=dt;
   p.x=Math.max(3*U,Math.min(W-3*U,p.x));p.y=Math.max(10*U,Math.min(H-6*U,p.y));
   // time scale follows how fast you move
   var moved=Math.hypot(p.x-p.px,p.y-p.py)/dt;p.px=p.x;p.py=p.y;
-  var target=Math.max(0.25,Math.min(1,moved/(15*U)));G.ts+=(target-G.ts)*Math.min(1,dt*(target>G.ts?14:2.5));
+  if(moved>8*U)G.still=0;else G.still=(G.still||0)+dt;
+  var target=G.still<0.7?1:0.25;G.ts+=(target-G.ts)*Math.min(1,dt*(target>G.ts?14:3));
   var w=dt*G.ts;G.wt+=w;if(p.inv>0)p.inv-=w*1.5+dt*0.15;
   // core fire
   p.fire-=w;if(p.fire<=0&&G.state==='play'){p.fire=0.2;shoot(p.x,p.y-3*U,0,120,1,'#dffcff');sfx('shot');}
@@ -137,7 +139,7 @@ function update(dt){var p=G.p;G.t+=dt;
     else{e.x+=e.vx*w;e.y+=e.vy*w;if(e.k==='drone'&&G.wave>=2){e.fire-=w;if(e.fire<=0){e.fire=2.6;eshoot(e.x,e.y,Math.PI/2,26,'#7cf5ff');}}}
     // body hits
     for(var f=G.flock.length-1;f>=0;f--){var a2=G.flock[f];if(a2.join<=0&&d2(a2,e)<Math.pow(e.r+1.4*U,2)){e.hp-=4;loseAlly(f);}}
-    if(d2(e,p)<Math.pow(e.r+1.6*U,2)){e.hp=0;hurt();}});
+    if(d2(e,p)<Math.pow(e.r+coreR()+0.6*U,2)){e.hp=0;hurt();}});
   // bullets
   G.bullets.forEach(function(b){b.x+=b.vx*w;b.y+=b.vy*w;var ts=G.boss?G.enemies.concat([G.boss]):G.enemies;
     for(var i=0;i<ts.length;i++){var e=ts[i];if(e.hp>0&&d2(b,e)<e.r*e.r){e.hp-=b.dmg;e.hitT=0.06;b.dead=1;G.parts.push({x:b.x,y:b.y,vx:0,vy:-15*U,l:0.1,c:'#fff',s:1.1*U});break;}}});
@@ -155,8 +157,7 @@ function update(dt){var p=G.p;G.t+=dt;
       ring(B.x,B.y,'#fff',60*U);G.shake=24;G.flash=0.4;sfx('boom');p.hp=Math.min(p.max+1,p.hp+1);p.max=Math.max(p.max,p.hp);G.boss=null;G.ebullets=[];}}
   // enemy bullets vs flock, then core
   G.ebullets.forEach(function(b){b.x+=b.vx*w;b.y+=b.vy*w;
-    for(var f=G.flock.length-1;f>=0;f--){var a=G.flock[f];if(a.join<=0&&d2(a,b)<Math.pow(b.r+1.3*U,2)){b.dead=1;loseAlly(f,b.c);return;}}
-    if(d2(b,p)<Math.pow(b.r+1*U,2)){b.dead=1;hurt();}});
+    if(d2(b,p)<Math.pow(b.r+coreR(),2)){b.dead=1;hurt();}});
   G.ebullets=G.ebullets.filter(function(b){return !b.dead&&b.y>-10*U&&b.y<H+10*U&&b.x>-10*U&&b.x<W+10*U;});
   // particles run in world time so they freeze too
   G.parts.forEach(function(q){var s=Math.max(w,dt*0.25);q.l-=s;if(q.ring)q.r=q.R*(1-q.l/q.L);else{q.x+=q.vx*s;q.y+=q.vy*s;q.vx*=Math.pow(0.03,s);q.vy*=Math.pow(0.03,s);}});G.parts=G.parts.filter(function(q){return q.l>0;});
@@ -183,6 +184,7 @@ function draw(){var p=G.p,frozen=1-G.ts;ctx.save();ctx.fillStyle='#06070f';ctx.f
   if(G.flock.length){ctx.strokeStyle='rgba(124,245,255,.12)';ctx.lineWidth=0.2*U;G.flock.forEach(function(a){ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(a.x,a.y);ctx.stroke();});}
   if(G.state!=='over'&&!(p.inv>0&&Math.floor(G.t*20)%2)){glow('#7cf5ff',18);ctx.strokeStyle='#e6fdff';ctx.lineWidth=0.6*U;var s=3*U;
     ctx.beginPath();ctx.moveTo(p.x,p.y-s*1.3);ctx.lineTo(p.x+s,p.y+s);ctx.lineTo(p.x,p.y+s*0.45);ctx.lineTo(p.x-s,p.y+s);ctx.closePath();ctx.stroke();ctx.fillStyle='rgba(124,245,255,.3)';ctx.fill();
+    if(G.flock.length>5){ctx.strokeStyle='rgba(255,90,122,.5)';ctx.lineWidth=0.25*U;ctx.beginPath();ctx.arc(p.x,p.y,coreR(),0,7);ctx.stroke();}
     ctx.fillStyle='#ffcc4d';ctx.beginPath();ctx.arc(p.x,p.y+s*1.05,(0.4+G.ts*0.6)*U,0,7);ctx.fill();}
   G.parts.forEach(function(q){glow(q.c,8);if(q.ring){ctx.strokeStyle=q.c;ctx.globalAlpha=q.l/q.L;ctx.lineWidth=0.6*U;ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,7);ctx.stroke();}
     else{ctx.fillStyle=q.c;ctx.globalAlpha=Math.min(1,q.l*2);ctx.fillRect(q.x-q.s/2,q.y-q.s/2,q.s,q.s);}ctx.globalAlpha=1;});
