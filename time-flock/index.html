@@ -45,7 +45,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:3px}
 <div class="over" id="menu">
   <h1>TIME FLOCK</h1>
   <div class="rules">
-    <div class="rule"><b>⏸ Time moves when you move</b><span>Stand still and the world freezes. Plan your path through the bullets.</span></div>
+    <div class="rule"><b>⏸ Time moves when you move</b><span>Stand still and the world slows to a crawl. Find your gap, then go.</span></div>
     <div class="rule"><b>✦ Enemies join your flock</b><span>Every enemy you destroy turns and fights for you.</span></div>
     <div class="rule"><b>⚠ A bigger flock is a bigger target</b><span>Bullets knock allies out of the flock. Protect your core.</span></div>
   </div>
@@ -121,7 +121,7 @@ function update(dt){var p=G.p;G.t+=dt;
   p.x=Math.max(3*U,Math.min(W-3*U,p.x));p.y=Math.max(10*U,Math.min(H-6*U,p.y));
   // time scale follows how fast you move
   var moved=Math.hypot(p.x-p.px,p.y-p.py)/dt;p.px=p.x;p.py=p.y;
-  var target=Math.max(0.03,Math.min(1,moved/(40*U)));G.ts+=(target-G.ts)*Math.min(1,dt*(target>G.ts?12:6));
+  var target=Math.max(0.25,Math.min(1,moved/(15*U)));G.ts+=(target-G.ts)*Math.min(1,dt*(target>G.ts?14:2.5));
   var w=dt*G.ts;G.wt+=w;if(p.inv>0)p.inv-=w*1.5+dt*0.15;
   // core fire
   p.fire-=w;if(p.fire<=0&&G.state==='play'){p.fire=0.2;shoot(p.x,p.y-3*U,0,120,1,'#dffcff');sfx('shot');}
