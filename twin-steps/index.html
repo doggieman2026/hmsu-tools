@@ -45,7 +45,7 @@ p{margin:0;color:var(--muted);font-size:17px;line-height:1.5}
     <div class="stat"><small>Level</small><span id="lvl">1</span></div>
     <div class="stat"><small>Moves</small><span id="mv">0</span></div>
     <div class="stat"><small>Par</small><span id="par">0</span></div>
-    <button class="sub" id="undo" type="button" aria-label="Undo">↶ Undo</button>
+    <button class="sub" id="hint" type="button">💡 Hint</button><button class="sub" id="undo" type="button" aria-label="Undo">↶ Undo</button>
     <button class="sub" id="reset" type="button" aria-label="Restart">⟲</button>
     <button class="sub" id="menuBtn" type="button">Menu</button>
   </div>
@@ -79,7 +79,10 @@ function single(L,board,s,g,mir){var n=L.n,dist=new Int16Array(n*n).fill(-1),q=[
   for(var h=0;h<q.length;h++){var c=q[h];if(c===g)return dist[c];for(var d=0;d<4;d++){var t=mv(L,board,c,mir?dB(L,d):d);if(dist[t]<0){dist[t]=dist[c]+1;q.push(t);}}}return -1;}
 // ---------- level generator (deterministic per level) ----------
 var TOTAL=48;
-function spec(i){var t=Math.floor(i/12);return {n:[5,5,6,6][t]+(i%12>=8?1:0),mirror:t===1||t===3,ice:t>=2,lo:[5,6,4,5][t]+Math.floor((i%12)/4),hi:[10,12,9,11][t]+Math.floor((i%12)/3)};}
+function spec(i){var t=Math.floor(i/12),j=i%12;
+  var n=(t===0&&j<4)?4:[5,5,5,6][t]+(j>=8?1:0);
+  var lo=j<2?2+j:[3,4,3,4][t]+Math.floor((j-2)/3),hi=j<2?3+j:[6,7,6,7][t]+Math.floor((j-2)/2);
+  return {n:n,mirror:t===1||t===3,ice:t>=2,lo:lo,hi:hi,easy:i<2};}
 var cache={};
 function level(i){if(cache[i])return cache[i];var sp=spec(i),r=rng((i+1)*2654435761>>>0),n=sp.n,N=n*n;
   for(var tries=0;tries<4000;tries++){
@@ -87,7 +90,7 @@ function level(i){if(cache[i])return cache[i];var sp=spec(i),r=rng((i+1)*2654435
     var free=function(bd){var f=[];bd.forEach(function(v,k){if(!v)f.push(k);});return f;},fa=free(A),fb=free(B);
     var L={n:n,mirror:sp.mirror,ice:sp.ice,A:A,B:B,sa:fa[(r()*fa.length)|0],ga:fa[(r()*fa.length)|0],sb:fb[(r()*fb.length)|0],gb:fb[(r()*fb.length)|0]};
     if(L.sa===L.ga||L.sb===L.gb)continue;var m=solve(L);if(m<sp.lo||m>sp.hi)continue;
-    var s1=single(L,A,L.sa,L.ga,false),s2=single(L,B,L.sb,L.gb,true);if(m<=Math.max(s1,s2)+1)continue; // must need the walls to sync up
+    var s1=single(L,A,L.sa,L.ga,false),s2=single(L,B,L.sb,L.gb,true);if(!sp.easy&&m<=Math.max(s1,s2))continue; // must need the walls to sync up
     L.par=m;cache[i]=L;return L;}
   // fallback (should not happen): loosen
   sp.lo=3;sp.hi=30;return level(i);}
@@ -108,6 +111,10 @@ function move(d){if(S.won||!S.L)return;var L=S.L,na=mv(L,L.A,S.a,d),nb=mv(L,L.B,
   S.bump.a=na===S.a?1:0;S.bump.b=nb===S.b?1:0;S.hist.push([S.a,S.b]);S.a=na;S.b=nb;S.moves++;tone(420+S.moves%5*40,0.06,0.035);hud();
   if(S.a===L.ga&&S.b===L.gb)win();}
 function undo(){if(S.won||!S.hist.length)return;var h=S.hist.pop();S.a=h[0];S.b=h[1];S.moves--;hud();tone(300,0.05,0.03);}
+function hintDir(){var L=S.L,N=L.n*L.n,st=S.a*N+S.b,prev=new Int32Array(N*N).fill(-1),pd=new Int8Array(N*N),q=[st],g=L.ga*N+L.gb;prev[st]=st;
+  for(var h=0;h<q.length;h++){var c=q[h];if(c===g)break;var a=(c/N)|0,b=c%N;for(var d=0;d<4;d++){var t=mv(L,L.A,a,d)*N+mv(L,L.B,b,dB(L,d));if(prev[t]<0){prev[t]=c;pd[t]=d;q.push(t);}}}
+  if(prev[g]<0)return -1;var c2=g,d2=-1;while(c2!==st){d2=pd[c2];c2=prev[c2];}return d2;}
+function hint(){if(S.won)return;var d=hintDir();if(d<0)return;S.hintD=d;S.hintT=performance.now();S.hints=(S.hints||0)+1;toast('Try: '+['Up ▲','Right ▶','Down ▼','Left ◀'][d]);}
 function starsFor(m,p){return m<=p?3:m<=p+3?2:1;}
 function win(){S.won=true;var st=starsFor(S.moves,S.L.par);if(st>(best[S.i]||0)){best[S.i]=st;store.set('stars',best);}
   [523,659,784,1047].forEach(function(f,k){setTimeout(function(){tone(f,0.2,0.06);},k*90);});
@@ -146,7 +153,7 @@ function draw(t){ctx.clearRect(0,0,W,H);var L=S.L;if(L){var n=L.n,wide=W>=H*1.15
 var KM={ArrowUp:0,KeyW:0,ArrowRight:1,KeyD:1,ArrowDown:2,KeyS:2,ArrowLeft:3,KeyA:3};
 addEventListener('keydown',function(e){var d=KM[e.code];var playing=document.getElementById('menu').hidden&&document.getElementById('levels').hidden;
   if(d!==undefined&&playing&&document.getElementById('win').hidden){move(d);e.preventDefault();}
-  else if(e.code==='KeyZ'||(e.code==='Backspace'))undo();else if(e.code==='KeyR'&&playing)load(S.i);
+  else if(e.code==='KeyH')hint();else if(e.code==='KeyZ'||(e.code==='Backspace'))undo();else if(e.code==='KeyR'&&playing)load(S.i);
   else if(e.code==='Escape')menu();});
 var sw=null;stage.addEventListener('pointerdown',function(e){sw={x:e.clientX,y:e.clientY};stage.setPointerCapture(e.pointerId);});
 stage.addEventListener('pointerup',function(e){if(!sw)return;var dx=e.clientX-sw.x,dy=e.clientY-sw.y;sw=null;if(Math.max(Math.abs(dx),Math.abs(dy))<24)return;
@@ -159,7 +166,7 @@ function levelsGrid(){var h='',u=unlocked();for(var i=0;i<TOTAL;i++){var st=best
 document.getElementById('grid').addEventListener('click',function(e){var b=e.target.closest('button[data-i]');if(b)load(Number(b.dataset.i));});
 document.getElementById('play').addEventListener('click',function(){load(unlocked());});
 document.getElementById('levelsBtn').addEventListener('click',levelsGrid);document.getElementById('levelsBack').addEventListener('click',menu);
-document.getElementById('menuBtn').addEventListener('click',menu);document.getElementById('undo').addEventListener('click',undo);document.getElementById('reset').addEventListener('click',function(){load(S.i);});
+document.getElementById('menuBtn').addEventListener('click',menu);document.getElementById('undo').addEventListener('click',undo);document.getElementById('hint').addEventListener('click',hint);document.getElementById('reset').addEventListener('click',function(){load(S.i);});
 document.getElementById('next').addEventListener('click',function(){load(Math.min(S.i+1,TOTAL-1));});document.getElementById('retry').addEventListener('click',function(){load(S.i);});
 if(typeof module!=='undefined')module.exports={level:level,solve:solve,TOTAL:TOTAL};
 fit();load(0);menu();requestAnimationFrame(draw);
