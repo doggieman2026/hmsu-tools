@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Twin Steps</title>
+<style>
+/* layout: top bar (level, moves, par, buttons), center canvas with two boards side by side (stacked on tall screens), d-pad under on touch screens. Overlays centered. */
+:root{--bg:#f7f1e8;--ink:#2d2a32;--muted:#7a7380;--card:#ffffff;--line:#e8dccb;--a:#ff7b6b;--b:#3fbfb0;--gold:#ffbe3d;--font:"Trebuchet MS","Segoe UI",system-ui,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--font)}
+.app{position:fixed;inset:0;display:flex;flex-direction:column;padding:12px 16px max(12px,env(safe-area-inset-bottom));gap:10px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.logo{font-weight:900;font-size:22px;margin-right:auto}.logo span{color:var(--a)}.logo i{color:var(--b);font-style:normal}
+.stat{background:var(--card);border:2px solid var(--line);border-radius:12px;padding:4px 12px;font-weight:800;font-variant-numeric:tabular-nums;font-size:15px}
+.stat small{display:block;font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+button{font:inherit;font-weight:800;border:0;border-radius:999px;padding:10px 20px;min-height:44px;cursor:pointer;background:var(--a);color:#fff;font-size:16px}
+button.sub{background:var(--card);color:var(--ink);border:2px solid var(--line)}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.stage{flex:1;min-height:0;position:relative;touch-action:none}
+canvas{position:absolute;inset:0;width:100%;height:100%}
+.pad{display:none;justify-content:center;gap:8px}
+.pad button{width:64px;height:52px;padding:0;border-radius:14px;font-size:22px;background:var(--card);color:var(--ink);border:2px solid var(--line)}
+@media (pointer:coarse){.pad{display:flex}}
+.over{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;background:rgba(247,241,232,.95)}
+.over[hidden]{display:none}
+h1{font-size:clamp(44px,9vw,76px);margin:0;font-weight:900}h1 span{color:var(--a)}h1 i{color:var(--b);font-style:normal}
+h2{font-size:32px;margin:0}
+p{margin:0;color:var(--muted);font-size:17px;line-height:1.5}
+.stars{font-size:46px;letter-spacing:4px;color:var(--gold)}.stars .off{color:var(--line)}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.grid{display:grid;grid-template-columns:repeat(8,52px);gap:8px;max-height:58vh;overflow:auto;padding:4px}
+.grid button{padding:0;min-height:52px;border-radius:12px;font-size:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05}
+.grid button small{font-size:10px;color:#fff5c9}
+.grid button.lock{background:var(--line);color:var(--muted);cursor:default}
+@media (max-width:520px){.grid{grid-template-columns:repeat(5,52px)}}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 16px;border-radius:999px;font-weight:800;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="logo">Twin <span>St</span><i>eps</i></div>
+    <div class="stat"><small>Level</small><span id="lvl">1</span></div>
+    <div class="stat"><small>Moves</small><span id="mv">0</span></div>
+    <div class="stat"><small>Par</small><span id="par">0</span></div>
+    <button class="sub" id="undo" type="button" aria-label="Undo">↶ Undo</button>
+    <button class="sub" id="reset" type="button" aria-label="Restart">⟲</button>
+    <button class="sub" id="menuBtn" type="button">Menu</button>
+  </div>
+  <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+  <div class="pad" aria-label="Direction buttons"><button data-d="3" type="button" aria-label="Left">◀</button><button data-d="0" type="button" aria-label="Up">▲</button><button data-d="2" type="button" aria-label="Down">▼</button><button data-d="1" type="button" aria-label="Right">▶</button></div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="over" id="menu">
+  <h1>Twin <span>St</span><i>eps</i></h1>
+  <p>One move, two boards. Both pieces move together.<br>Use the walls to get them onto their stars <b>at the same time</b>.</p>
+  <div class="row"><button id="play" type="button">Play</button><button class="sub" id="levelsBtn" type="button">Levels</button></div>
+  <p style="font-size:14px">Arrow keys / WASD or swipe · Z = undo · R = restart</p>
+  <p id="prog"></p>
+</div>
+<div class="over" id="levels" hidden><h2>Levels</h2><div class="grid" id="grid"></div><button class="sub" id="levelsBack" type="button">Back</button></div>
+<div class="over" id="win" hidden><h2 id="winT">Solved!</h2><div class="stars" id="winS"></div><p id="winP"></p><div class="row"><button id="next" type="button">Next</button><button class="sub" id="retry" type="button">Retry</button></div></div>
+<script>
+"use strict";
+// ---------- rules ----------
+// Each board: n x n, cells 1 = block. A move pushes both pieces one way.
+// mirror: board B gets left/right swapped. ice: pieces slide until they hit something.
+var DX=[0,1,0,-1],DY=[-1,0,1,0];
+function rng(s){return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+function mv(L,board,pos,d){var n=L.n,x=pos%n,y=(pos/n)|0;
+  do{var nx=x+DX[d],ny=y+DY[d];if(nx<0||ny<0||nx>=n||ny>=n||board[ny*n+nx])break;x=nx;y=ny;}while(L.ice);return y*n+x;}
+function dB(L,d){return L.mirror&&(d===1||d===3)?4-d:d;}
+function solve(L){var n=L.n,N=n*n,dist=new Int16Array(N*N).fill(-1),q=[L.sa*N+L.sb];dist[q[0]]=0;
+  for(var h=0;h<q.length;h++){var s=q[h],a=(s/N)|0,b=s%N;if(a===L.ga&&b===L.gb)return dist[s];
+    for(var d=0;d<4;d++){var t=mv(L,L.A,a,d)*N+mv(L,L.B,b,dB(L,d));if(dist[t]<0){dist[t]=dist[s]+1;q.push(t);}}}return -1;}
+function single(L,board,s,g,mir){var n=L.n,dist=new Int16Array(n*n).fill(-1),q=[s];dist[s]=0;
+  for(var h=0;h<q.length;h++){var c=q[h];if(c===g)return dist[c];for(var d=0;d<4;d++){var t=mv(L,board,c,mir?dB(L,d):d);if(dist[t]<0){dist[t]=dist[c]+1;q.push(t);}}}return -1;}
+// ---------- level generator (deterministic per level) ----------
+var TOTAL=48;
+function spec(i){var t=Math.floor(i/12);return {n:[5,5,6,6][t]+(i%12>=8?1:0),mirror:t===1||t===3,ice:t>=2,lo:[5,6,4,5][t]+Math.floor((i%12)/4),hi:[10,12,9,11][t]+Math.floor((i%12)/3)};}
+var cache={};
+function level(i){if(cache[i])return cache[i];var sp=spec(i),r=rng((i+1)*2654435761>>>0),n=sp.n,N=n*n;
+  for(var tries=0;tries<4000;tries++){
+    var dens=sp.ice?0.16+r()*0.1:0.18+r()*0.12,A=[],B=[];for(var k=0;k<N;k++){A.push(r()<dens?1:0);B.push(r()<dens?1:0);}
+    var free=function(bd){var f=[];bd.forEach(function(v,k){if(!v)f.push(k);});return f;},fa=free(A),fb=free(B);
+    var L={n:n,mirror:sp.mirror,ice:sp.ice,A:A,B:B,sa:fa[(r()*fa.length)|0],ga:fa[(r()*fa.length)|0],sb:fb[(r()*fb.length)|0],gb:fb[(r()*fb.length)|0]};
+    if(L.sa===L.ga||L.sb===L.gb)continue;var m=solve(L);if(m<sp.lo||m>sp.hi)continue;
+    var s1=single(L,A,L.sa,L.ga,false),s2=single(L,B,L.sb,L.gb,true);if(m<=Math.max(s1,s2)+1)continue; // must need the walls to sync up
+    L.par=m;cache[i]=L;return L;}
+  // fallback (should not happen): loosen
+  sp.lo=3;sp.hi=30;return level(i);}
+// ---------- storage ----------
+var store={get:function(k,f){try{var v=JSON.parse(localStorage.getItem('twinsteps-'+k));return v==null?f:v;}catch(e){return f;}},set:function(k,v){try{localStorage.setItem('twinsteps-'+k,JSON.stringify(v));}catch(e){}}};
+var best=store.get('stars',{});function unlocked(){var u=0;while(u<TOTAL&&best[u])u++;return Math.min(u,TOTAL-1);}
+// ---------- sound ----------
+var AC=null;function tone(f,d,v,type){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type=type||'triangle';o.frequency.value=f;g.gain.setValueAtTime(v||0.05,t);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d);}catch(e){}}
+// ---------- state ----------
+var S={i:0,L:null,a:0,b:0,hist:[],moves:0,won:false,anim:{a:{x:0,y:0},b:{x:0,y:0}},bump:{a:0,b:0}};
+function load(i){S.i=i;S.L=level(i);S.a=S.L.sa;S.b=S.L.sb;S.hist=[];S.moves=0;S.won=false;var n=S.L.n;
+  S.anim.a={x:S.a%n,y:(S.a/n)|0};S.anim.b={x:S.b%n,y:(S.b/n)|0};hud();
+  ['menu','levels','win'].forEach(function(k){document.getElementById(k).hidden=true;});
+  var tip=i===0?'Both pieces move together':i===12?'Mirror! The right board moves left/right reversed':i===24?'Ice! Pieces slide until they hit something':i===36?'Ice + Mirror':'';if(tip)toast(tip);}
+function hud(){document.getElementById('lvl').textContent=(S.i+1)+' / '+TOTAL;document.getElementById('mv').textContent=S.moves;document.getElementById('par').textContent=S.L.par;}
+function move(d){if(S.won||!S.L)return;var L=S.L,na=mv(L,L.A,S.a,d),nb=mv(L,L.B,S.b,dB(L,d));
+  if(na===S.a&&nb===S.b){S.bump.a=S.bump.b=1;tone(140,0.08,0.04,'square');return;}
+  S.bump.a=na===S.a?1:0;S.bump.b=nb===S.b?1:0;S.hist.push([S.a,S.b]);S.a=na;S.b=nb;S.moves++;tone(420+S.moves%5*40,0.06,0.035);hud();
+  if(S.a===L.ga&&S.b===L.gb)win();}
+function undo(){if(S.won||!S.hist.length)return;var h=S.hist.pop();S.a=h[0];S.b=h[1];S.moves--;hud();tone(300,0.05,0.03);}
+function starsFor(m,p){return m<=p?3:m<=p+3?2:1;}
+function win(){S.won=true;var st=starsFor(S.moves,S.L.par);if(st>(best[S.i]||0)){best[S.i]=st;store.set('stars',best);}
+  [523,659,784,1047].forEach(function(f,k){setTimeout(function(){tone(f,0.2,0.06);},k*90);});
+  setTimeout(function(){document.getElementById('winT').textContent=S.i===TOTAL-1?'You solved them all!':'Level '+(S.i+1)+' solved!';
+    var h='';for(var k=0;k<3;k++)h+=k<st?'★':'<span class="off">★</span>';document.getElementById('winS').innerHTML=h;
+    document.getElementById('winP').textContent=S.moves+' moves · par '+S.L.par+(st<3?' · solve it in '+S.L.par+' for 3 stars':' · perfect!');
+    document.getElementById('next').hidden=S.i>=TOTAL-1;document.getElementById('win').hidden=false;document.getElementById(S.i>=TOTAL-1?'retry':'next').focus();},450);}
+// ---------- draw ----------
+var cv=document.getElementById('cv'),ctx=cv.getContext('2d'),stage=document.getElementById('stage'),W=0,H=0;
+function fit(){var r=stage.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);W=r.width;H=r.height;cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0);}
+addEventListener('resize',fit);
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function star(x,y,r,c){ctx.fillStyle=c;ctx.beginPath();for(var i=0;i<10;i++){var a=Math.PI/5*i-Math.PI/2,q=i%2?r*.45:r;ctx.lineTo(x+q*Math.cos(a),y+q*Math.sin(a));}ctx.closePath();ctx.fill();}
+function board(L,bd,ox,oy,cell,col,pos,goal,an,bump,label,t){var n=L.n,sz=cell*n;
+  ctx.fillStyle=L.ice?'#e3f3fb':'#ffffff';rr(ox-8,oy-8,sz+16,sz+16,18);ctx.fill();ctx.strokeStyle='#e8dccb';ctx.lineWidth=2;ctx.stroke();
+  for(var k=0;k<n*n;k++){var x=ox+(k%n)*cell,y=oy+((k/n)|0)*cell;
+    if(bd[k]){ctx.fillStyle='#5b5566';rr(x+3,y+3,cell-6,cell-6,cell*0.22);ctx.fill();ctx.fillStyle='rgba(255,255,255,.12)';rr(x+6,y+6,cell-12,(cell-12)*0.35,cell*0.15);ctx.fill();}
+    else{ctx.fillStyle=L.ice?'rgba(140,200,230,.25)':'rgba(232,220,203,.45)';rr(x+3,y+3,cell-6,cell-6,cell*0.2);ctx.fill();}}
+  var on=pos===goal;star(ox+(goal%n+.5)*cell,oy+(((goal/n)|0)+.5)*cell,cell*(on?0.0:0.36)+cell*0.04*Math.sin(t/200),'#ffbe3d');
+  // piece
+  var tx=pos%n,ty=(pos/n)|0;an.x+=(tx-an.x)*0.35;an.y+=(ty-an.y)*0.35;var px=ox+(an.x+.5)*cell,py=oy+(an.y+.5)*cell,sq=1+bump*0.18;
+  ctx.save();ctx.translate(px,py);ctx.scale(sq,2-sq);ctx.fillStyle=col;ctx.beginPath();ctx.arc(0,0,cell*0.34,0,7);ctx.fill();
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(-cell*0.11,-cell*0.05,cell*0.08,0,7);ctx.arc(cell*0.11,-cell*0.05,cell*0.08,0,7);ctx.fill();
+  ctx.fillStyle='#2d2a32';ctx.beginPath();ctx.arc(-cell*0.1,-cell*0.04,cell*0.04,0,7);ctx.arc(cell*0.12,-cell*0.04,cell*0.04,0,7);ctx.fill();
+  if(on){ctx.strokeStyle='#ffbe3d';ctx.lineWidth=cell*0.06;ctx.beginPath();ctx.arc(0,0,cell*0.44,0,7);ctx.stroke();}
+  ctx.restore();
+  if(label){ctx.fillStyle='#7a7380';ctx.font='800 '+Math.max(12,cell*0.28)+'px Trebuchet MS,sans-serif';ctx.textAlign='center';ctx.fillText(label,ox+sz/2,oy+sz+8+Math.max(16,cell*0.4));}}
+function draw(t){ctx.clearRect(0,0,W,H);var L=S.L;if(L){var n=L.n,wide=W>=H*1.15,gap=32,lab=30;
+  var cell=wide?Math.min((W-gap-32)/(2*n),(H-lab-48)/n):Math.min((W-24)/n,(H-gap-2*lab-40)/(2*n));cell=Math.floor(cell);var sz=cell*n;
+  var ax,ay,bx,by;if(wide){ax=(W-2*sz-gap)/2;bx=ax+sz+gap;ay=by=(H-sz-lab)/2+4;}else{ax=bx=(W-sz)/2;ay=(H-2*sz-gap-2*lab)/2+8;by=ay+sz+lab+gap;}
+  board(L,L.A,ax,ay,cell,'#ff7b6b',S.a,L.ga,S.anim.a,S.bump.a,L.ice?'ICE':'',t);
+  board(L,L.B,bx,by,cell,'#3fbfb0',S.b,L.gb,S.anim.b,S.bump.b,(L.mirror?'⇄ MIRROR':'')+(L.ice?(L.mirror?' · ':'')+'ICE':''),t);
+  S.bump.a*=0.8;S.bump.b*=0.8;}
+  requestAnimationFrame(draw);}
+// ---------- input ----------
+var KM={ArrowUp:0,KeyW:0,ArrowRight:1,KeyD:1,ArrowDown:2,KeyS:2,ArrowLeft:3,KeyA:3};
+addEventListener('keydown',function(e){var d=KM[e.code];var playing=document.getElementById('menu').hidden&&document.getElementById('levels').hidden;
+  if(d!==undefined&&playing&&document.getElementById('win').hidden){move(d);e.preventDefault();}
+  else if(e.code==='KeyZ'||(e.code==='Backspace'))undo();else if(e.code==='KeyR'&&playing)load(S.i);
+  else if(e.code==='Escape')menu();});
+var sw=null;stage.addEventListener('pointerdown',function(e){sw={x:e.clientX,y:e.clientY};stage.setPointerCapture(e.pointerId);});
+stage.addEventListener('pointerup',function(e){if(!sw)return;var dx=e.clientX-sw.x,dy=e.clientY-sw.y;sw=null;if(Math.max(Math.abs(dx),Math.abs(dy))<24)return;
+  move(Math.abs(dx)>Math.abs(dy)?(dx>0?1:3):(dy>0?2:0));});
+Array.prototype.forEach.call(document.querySelectorAll('.pad button'),function(b){b.addEventListener('click',function(){move(Number(b.dataset.d));});});
+var tt=0;function toast(m){var e=document.getElementById('toast');e.textContent=m;e.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){e.classList.remove('on');},2600);}
+function menu(){var tot=0;for(var k in best)tot+=best[k];document.getElementById('prog').textContent='Stars '+tot+' / '+TOTAL*3;['levels','win'].forEach(function(k){document.getElementById(k).hidden=true;});document.getElementById('menu').hidden=false;}
+function levelsGrid(){var h='',u=unlocked();for(var i=0;i<TOTAL;i++){var st=best[i]||0;h+=i<=u?'<button type="button" data-i="'+i+'">'+(i+1)+'<small>'+'★'.repeat(st)+'</small></button>':'<button type="button" class="lock" disabled aria-label="locked">🔒</button>';}
+  document.getElementById('grid').innerHTML=h;document.getElementById('menu').hidden=true;document.getElementById('levels').hidden=false;}
+document.getElementById('grid').addEventListener('click',function(e){var b=e.target.closest('button[data-i]');if(b)load(Number(b.dataset.i));});
+document.getElementById('play').addEventListener('click',function(){load(unlocked());});
+document.getElementById('levelsBtn').addEventListener('click',levelsGrid);document.getElementById('levelsBack').addEventListener('click',menu);
+document.getElementById('menuBtn').addEventListener('click',menu);document.getElementById('undo').addEventListener('click',undo);document.getElementById('reset').addEventListener('click',function(){load(S.i);});
+document.getElementById('next').addEventListener('click',function(){load(Math.min(S.i+1,TOTAL-1));});document.getElementById('retry').addEventListener('click',function(){load(S.i);});
+if(typeof module!=='undefined')module.exports={level:level,solve:solve,TOTAL:TOTAL};
+fit();load(0);menu();requestAnimationFrame(draw);
+</script>
+</body>
+</html>
