@@ -123,7 +123,7 @@ function update(dt){var p=G.p;G.t+=dt;
   // time scale follows how fast you move
   var moved=Math.hypot(p.x-p.px,p.y-p.py)/dt;p.px=p.x;p.py=p.y;
   if(moved>8*U)G.still=0;else G.still=(G.still||0)+dt;
-  var target=G.still<0.7?1:0.25;G.ts+=(target-G.ts)*Math.min(1,dt*(target>G.ts?2.5:3));
+  var target=G.still<0.35?1:0.25;G.ts+=(target-G.ts)*Math.min(1,dt*(target>G.ts?2.5:5));
   var w=dt*G.ts;G.wt+=w;if(p.inv>0)p.inv-=w*1.5+dt*0.15;
   // core fire
   p.fire-=w;if(p.fire<=0&&G.state==='play'){p.fire=0.2;shoot(p.x,p.y-3*U,0,120,1,'#dffcff');sfx('shot');}
