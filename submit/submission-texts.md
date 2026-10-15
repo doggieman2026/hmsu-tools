@@ -11,7 +11,7 @@
   One move, two boards. Guide both blobs onto their stars at the same time.
 - Description:
   Twin Steps is a calm logic puzzle with a twist: every move pushes two pieces on two different boards. Walls stop one piece while the other keeps going. Use that to bring both blobs onto their stars at the very same moment.
-  48 hand-checked levels introduce new rules as you go: Mirror boards flip left and right, and Ice makes pieces slide until they hit something. Solve each level within par for three stars, and use undo or a hint whenever you get stuck.
+  A new Daily puzzle every day, the same for everyone, with a shareable result. Plus 48 checked levels that introduce new rules as you go: Mirror boards flip left and right, and Ice makes pieces slide until they hit something. Solve each level within par for three stars, and use undo or a hint whenever you get stuck.
 
 ## 2. Time Flock
 - Category: Shooting

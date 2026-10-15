@@ -56,12 +56,12 @@ p{margin:0;color:var(--muted);font-size:17px;line-height:1.5}
 <div class="over" id="menu">
   <h1>Twin <span>St</span><i>eps</i></h1>
   <p>One move, two boards. Both pieces move together.<br>Use the walls to get them onto their stars <b>at the same time</b>.</p>
-  <div class="row"><button id="play" type="button">Play</button><button class="sub" id="levelsBtn" type="button">Levels</button></div>
+  <div class="row"><button id="play" type="button">Play</button><button class="sub" id="dailyBtn" type="button">Daily puzzle</button><button class="sub" id="levelsBtn" type="button">Levels</button></div>
   <p style="font-size:14px">Arrow keys / WASD or swipe · Z = undo · R = restart</p>
   <p id="prog"></p>
 </div>
 <div class="over" id="levels" hidden><h2>Levels</h2><div class="grid" id="grid"></div><button class="sub" id="levelsBack" type="button">Back</button></div>
-<div class="over" id="win" hidden><h2 id="winT">Solved!</h2><div class="stars" id="winS"></div><p id="winP"></p><div class="row"><button id="next" type="button">Next</button><button class="sub" id="retry" type="button">Retry</button></div></div>
+<div class="over" id="win" hidden><h2 id="winT">Solved!</h2><div class="stars" id="winS"></div><p id="winP"></p><div class="row"><button id="share" type="button" hidden>Share result</button><button id="next" type="button">Next</button><button class="sub" id="retry" type="button">Retry</button></div></div>
 <script>
 "use strict";
 // ---------- rules ----------
@@ -84,16 +84,20 @@ function spec(i){var t=Math.floor(i/12),j=i%12;
   var lo=j<2?2+j:[3,4,3,4][t]+Math.floor((j-2)/3),hi=j<2?3+j:[6,7,6,7][t]+Math.floor((j-2)/2);
   return {n:n,mirror:t===1||t===3,ice:t>=2,lo:lo,hi:hi,easy:i<2};}
 var cache={};
-function level(i){if(cache[i])return cache[i];var sp=spec(i),r=rng((i+1)*2654435761>>>0),n=sp.n,N=n*n;
+function level(i){if(cache[i])return cache[i];return (cache[i]=gen(spec(i),(i+1)*2654435761>>>0));}
+function gen(sp,seed){var r=rng(seed),n=sp.n,N=n*n;
   for(var tries=0;tries<4000;tries++){
     var dens=sp.ice?0.16+r()*0.1:0.18+r()*0.12,A=[],B=[];for(var k=0;k<N;k++){A.push(r()<dens?1:0);B.push(r()<dens?1:0);}
     var free=function(bd){var f=[];bd.forEach(function(v,k){if(!v)f.push(k);});return f;},fa=free(A),fb=free(B);
     var L={n:n,mirror:sp.mirror,ice:sp.ice,A:A,B:B,sa:fa[(r()*fa.length)|0],ga:fa[(r()*fa.length)|0],sb:fb[(r()*fb.length)|0],gb:fb[(r()*fb.length)|0]};
     if(L.sa===L.ga||L.sb===L.gb)continue;var m=solve(L);if(m<sp.lo||m>sp.hi)continue;
     var s1=single(L,A,L.sa,L.ga,false),s2=single(L,B,L.sb,L.gb,true);if(!sp.easy&&m<=Math.max(s1,s2))continue; // must need the walls to sync up
-    L.par=m;cache[i]=L;return L;}
+    L.par=m;return L;}
   // fallback (should not happen): loosen
-  sp.lo=3;sp.hi=30;return level(i);}
+  sp.lo=3;sp.hi=30;return gen(sp,seed+1);}
+// ---------- daily puzzle: same for everyone each day ----------
+var DAY0=Date.UTC(2026,9,16);function dayNum(){var d=new Date();return Math.floor((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-DAY0)/864e5)+1;}
+function dailyLevel(){var k=dayNum(),m=k%4;if(cache['d'+k])return cache['d'+k];return (cache['d'+k]=gen({n:6,mirror:m===1||m===3,ice:m>=2,lo:6,hi:10},(k*7919+12345)>>>0));}
 // ---------- storage ----------
 var store={get:function(k,f){try{var v=JSON.parse(localStorage.getItem('twinsteps-'+k));return v==null?f:v;}catch(e){return f;}},set:function(k,v){try{localStorage.setItem('twinsteps-'+k,JSON.stringify(v));}catch(e){}}};
 var best=store.get('stars',{});function unlocked(){var u=0;while(u<TOTAL&&best[u])u++;return Math.min(u,TOTAL-1);}
@@ -101,11 +105,11 @@ var best=store.get('stars',{});function unlocked(){var u=0;while(u<TOTAL&&best[u
 var AC=null;function tone(f,d,v,type){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type=type||'triangle';o.frequency.value=f;g.gain.setValueAtTime(v||0.05,t);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d);}catch(e){}}
 // ---------- state ----------
 var S={i:0,L:null,a:0,b:0,hist:[],moves:0,won:false,anim:{a:{x:0,y:0},b:{x:0,y:0}},bump:{a:0,b:0}};
-function load(i){S.i=i;S.L=level(i);S.a=S.L.sa;S.b=S.L.sb;S.hist=[];S.moves=0;S.won=false;var n=S.L.n;
+function load(i){S.i=i;S.hints=0;S.L=i<0?dailyLevel():level(i);S.a=S.L.sa;S.b=S.L.sb;S.hist=[];S.moves=0;S.won=false;var n=S.L.n;
   S.anim.a={x:S.a%n,y:(S.a/n)|0};S.anim.b={x:S.b%n,y:(S.b/n)|0};hud();
   ['menu','levels','win'].forEach(function(k){document.getElementById(k).hidden=true;});
-  var tip=i===0?'Both pieces move together':i===12?'Mirror! The right board moves left/right reversed':i===24?'Ice! Pieces slide until they hit something':i===36?'Ice + Mirror':'';if(tip)toast(tip);}
-function hud(){document.getElementById('lvl').textContent=(S.i+1)+' / '+TOTAL;document.getElementById('mv').textContent=S.moves;document.getElementById('par').textContent=S.L.par;}
+  var tip=i<0?'Daily puzzle #'+dayNum()+' · same for everyone today':i===0?'Both pieces move together':i===12?'Mirror! The right board moves left/right reversed':i===24?'Ice! Pieces slide until they hit something':i===36?'Ice + Mirror':'';if(tip)toast(tip);}
+function hud(){document.getElementById('lvl').textContent=S.i<0?'Daily #'+dayNum():(S.i+1)+' / '+TOTAL;document.getElementById('mv').textContent=S.moves;document.getElementById('par').textContent=S.L.par;}
 function move(d){if(S.won||!S.L)return;var L=S.L,na=mv(L,L.A,S.a,d),nb=mv(L,L.B,S.b,dB(L,d));
   if(na===S.a&&nb===S.b){S.bump.a=S.bump.b=1;tone(140,0.08,0.04,'square');return;}
   S.bump.a=na===S.a?1:0;S.bump.b=nb===S.b?1:0;S.hist.push([S.a,S.b]);S.a=na;S.b=nb;S.moves++;tone(420+S.moves%5*40,0.06,0.035);hud();
@@ -116,12 +120,13 @@ function hintDir(){var L=S.L,N=L.n*L.n,st=S.a*N+S.b,prev=new Int32Array(N*N).fil
   if(prev[g]<0)return -1;var c2=g,d2=-1;while(c2!==st){d2=pd[c2];c2=prev[c2];}return d2;}
 function hint(){if(S.won)return;var d=hintDir();if(d<0)return;S.hintD=d;S.hintT=performance.now();S.hints=(S.hints||0)+1;toast('Try: '+['Up ▲','Right ▶','Down ▼','Left ◀'][d]);}
 function starsFor(m,p){return m<=p?3:m<=p+3?2:1;}
-function win(){S.won=true;var st=starsFor(S.moves,S.L.par);if(st>(best[S.i]||0)){best[S.i]=st;store.set('stars',best);}
+function win(){S.won=true;var st=starsFor(S.moves,S.L.par);if(S.i<0){var dk='daily-'+dayNum(),pv=store.get(dk,null);if(!pv||S.moves<pv.m)store.set(dk,{m:S.moves,h:S.hints||0,st:st});}
+  else if(st>(best[S.i]||0)){best[S.i]=st;store.set('stars',best);}
   [523,659,784,1047].forEach(function(f,k){setTimeout(function(){tone(f,0.2,0.06);},k*90);});
-  setTimeout(function(){document.getElementById('winT').textContent=S.i===TOTAL-1?'You solved them all!':'Level '+(S.i+1)+' solved!';
+  setTimeout(function(){document.getElementById('winT').textContent=S.i<0?'Daily #'+dayNum()+' solved!':S.i===TOTAL-1?'You solved them all!':'Level '+(S.i+1)+' solved!';
     var h='';for(var k=0;k<3;k++)h+=k<st?'★':'<span class="off">★</span>';document.getElementById('winS').innerHTML=h;
     document.getElementById('winP').textContent=S.moves+' moves · par '+S.L.par+(st<3?' · solve it in '+S.L.par+' for 3 stars':' · perfect!');
-    document.getElementById('next').hidden=S.i>=TOTAL-1;document.getElementById('win').hidden=false;document.getElementById(S.i>=TOTAL-1?'retry':'next').focus();},450);}
+    document.getElementById('next').hidden=S.i<0||S.i>=TOTAL-1;document.getElementById('share').hidden=S.i>=0;document.getElementById('win').hidden=false;document.getElementById(S.i<0?'share':S.i>=TOTAL-1?'retry':'next').focus();},450);}
 // ---------- draw ----------
 var cv=document.getElementById('cv'),ctx=cv.getContext('2d'),stage=document.getElementById('stage'),W=0,H=0;
 function fit(){var r=stage.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);W=r.width;H=r.height;cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0);}
@@ -160,12 +165,17 @@ stage.addEventListener('pointerup',function(e){if(!sw)return;var dx=e.clientX-sw
   move(Math.abs(dx)>Math.abs(dy)?(dx>0?1:3):(dy>0?2:0));});
 Array.prototype.forEach.call(document.querySelectorAll('.pad button'),function(b){b.addEventListener('click',function(){move(Number(b.dataset.d));});});
 var tt=0;function toast(m){var e=document.getElementById('toast');e.textContent=m;e.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){e.classList.remove('on');},2600);}
-function menu(){var tot=0;for(var k in best)tot+=best[k];document.getElementById('prog').textContent='Stars '+tot+' / '+TOTAL*3;['levels','win'].forEach(function(k){document.getElementById(k).hidden=true;});document.getElementById('menu').hidden=false;}
+function menu(){var tot=0;for(var k in best)tot+=best[k];var dd=store.get('daily-'+dayNum(),null);document.getElementById('prog').textContent='Stars '+tot+' / '+TOTAL*3+(dd?' · Daily #'+dayNum()+' done in '+dd.m:'');document.getElementById('dailyBtn').textContent=dd?'Daily ✓':'Daily puzzle';['levels','win'].forEach(function(k){document.getElementById(k).hidden=true;});document.getElementById('menu').hidden=false;}
 function levelsGrid(){var h='',u=unlocked();for(var i=0;i<TOTAL;i++){var st=best[i]||0;h+=i<=u?'<button type="button" data-i="'+i+'">'+(i+1)+'<small>'+'★'.repeat(st)+'</small></button>':'<button type="button" class="lock" disabled aria-label="locked">🔒</button>';}
   document.getElementById('grid').innerHTML=h;document.getElementById('menu').hidden=true;document.getElementById('levels').hidden=false;}
 document.getElementById('grid').addEventListener('click',function(e){var b=e.target.closest('button[data-i]');if(b)load(Number(b.dataset.i));});
 document.getElementById('play').addEventListener('click',function(){load(unlocked());});
-document.getElementById('levelsBtn').addEventListener('click',levelsGrid);document.getElementById('levelsBack').addEventListener('click',menu);
+document.getElementById('levelsBtn').addEventListener('click',levelsGrid);
+document.getElementById('dailyBtn').addEventListener('click',function(){load(-1);});
+document.getElementById('share').addEventListener('click',function(){var L=S.L,st=starsFor(S.moves,L.par),rule=(L.mirror?'⇄':'')+(L.ice?'❄':'')||'●';
+  var txt='Twin Steps Daily #'+dayNum()+' '+rule+'\n'+'⭐'.repeat(st)+'☆'.repeat(3-st)+' '+S.moves+' moves (par '+L.par+')'+(S.hints?' 💡'+S.hints:'')+'\n'+location.href.split('#')[0].split('?')[0];
+  if(navigator.share){navigator.share({text:txt}).catch(function(){});return;}
+  if(navigator.clipboard)navigator.clipboard.writeText(txt).then(function(){toast('Copied! Paste it anywhere');},function(){toast(txt);});else toast(txt);});document.getElementById('levelsBack').addEventListener('click',menu);
 document.getElementById('menuBtn').addEventListener('click',menu);document.getElementById('undo').addEventListener('click',undo);document.getElementById('hint').addEventListener('click',hint);document.getElementById('reset').addEventListener('click',function(){load(S.i);});
 document.getElementById('next').addEventListener('click',function(){load(Math.min(S.i+1,TOTAL-1));});document.getElementById('retry').addEventListener('click',function(){load(S.i);});
 if(typeof module!=='undefined')module.exports={level:level,solve:solve,TOTAL:TOTAL};
