@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>スマホでガチャ</title>
+<meta name="description" content="お店やイベントで使える、スマホでまわすガチャ（くじ引き）。景品と確率を入れるだけ。">
+<style>
+/* layout: 1列。上にガチャ本体（ハンドルを回すとカプセルが落ちて開く）、下に結果。設定画面は別のパネル */
+:root{--bg:#fff3e6;--card:#ffffff;--ink:#2d2630;--muted:#7b7180;--line:#f0dcc6;--accent:#ff5d73;--accent2:#ffb703;--font:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#1d1720;--card:#2a2230;--ink:#f6eef7;--muted:#b8acbd;--line:#43384a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1d1720;--card:#2a2230;--ink:#f6eef7;--muted:#b8acbd;--line:#43384a;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.6}
+.wrap{max-width:520px;margin:0 auto;padding:16px 16px 40px;display:flex;flex-direction:column;gap:14px}
+h1{font-size:1.5rem;margin:0;text-align:center}
+.sub{color:var(--muted);text-align:center;margin:0;font-size:.9rem}
+.machine{position:relative;width:min(320px,82vw);aspect-ratio:3/4;margin:0 auto}
+.globe{position:absolute;left:8%;right:8%;top:0;aspect-ratio:1/1;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.9),rgba(255,255,255,.35) 40%,rgba(200,230,255,.25));border:6px solid #fff;box-shadow:inset 0 -12px 30px rgba(0,0,0,.08),0 6px 0 rgba(0,0,0,.06);overflow:hidden}
+.globe i{position:absolute;width:24%;aspect-ratio:1/1;border-radius:50%;box-shadow:inset -4px -6px 0 rgba(0,0,0,.12)}
+.globe i::after{content:"";position:absolute;left:0;right:0;top:48%;height:6%;background:rgba(255,255,255,.7)}
+.body{position:absolute;left:4%;right:4%;top:58%;bottom:0;border-radius:24px 24px 18px 18px;background:var(--accent);box-shadow:inset 0 -10px 0 rgba(0,0,0,.12)}
+.handle{position:absolute;left:50%;top:22%;width:30%;aspect-ratio:1/1;transform:translateX(-50%);border-radius:50%;background:#fff;border:0;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.15);transition:transform .9s cubic-bezier(.3,1.4,.5,1)}
+.handle::before{content:"";position:absolute;left:44%;right:44%;top:8%;bottom:8%;background:var(--accent2);border-radius:6px}
+.handle:focus-visible{outline:4px solid var(--ink);outline-offset:4px}
+.slot{position:absolute;left:50%;bottom:8%;width:34%;height:16%;transform:translateX(-50%);background:rgba(0,0,0,.25);border-radius:12px}
+.label{position:absolute;left:0;right:0;top:4%;text-align:center;color:#fff;font-weight:900;font-size:.95rem;letter-spacing:2px}
+.cap{position:absolute;left:50%;bottom:9%;width:22%;aspect-ratio:1/1;transform:translate(-50%,0) scale(.2);border-radius:50%;opacity:0;transition:all .7s cubic-bezier(.3,1.5,.6,1);z-index:3}
+.cap.drop{opacity:1;transform:translate(-50%,40%) scale(1)}
+.cap::after{content:"";position:absolute;left:0;right:0;top:47%;height:7%;background:rgba(255,255,255,.75)}
+.result{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:18px;text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center}
+.result[hidden]{display:none}
+.result .prize{font-size:1.8rem;font-weight:900;line-height:1.3}
+.result .rank{font-weight:900;color:#fff;border-radius:999px;padding:2px 14px}
+button.big{font:inherit;font-weight:900;font-size:1.1rem;border:0;border-radius:999px;padding:14px 28px;min-height:52px;background:var(--accent);color:#fff;cursor:pointer;width:100%}
+button.ghost,a.ghost{font:inherit;font-weight:700;border:2px solid var(--line);border-radius:999px;padding:10px 18px;min-height:44px;background:var(--card);color:var(--ink);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
+.panel{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.panel h2{font-size:1.1rem;margin:0}
+label{font-size:.85rem;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px;min-width:0;width:100%}
+.prow{display:grid;grid-template-columns:28px minmax(0,1fr) 64px 64px 36px;gap:6px;align-items:center}
+.prow input[type=color]{padding:0;height:32px;width:28px;border:0;background:none}
+.prow button{border:0;background:none;font-size:1.2rem;cursor:pointer;color:var(--muted);min-height:36px}
+.head{font-size:.75rem;color:var(--muted)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.note{font-size:.8rem;color:var(--muted);margin:0}
+.stock{font-size:.85rem;color:var(--muted);text-align:center}
+#qr{display:flex;justify-content:center;background:#fff;padding:12px;border-radius:12px}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:9}
+footer{font-size:.75rem;color:var(--muted);text-align:center}
+</style>
+</head>
+<body>
+<canvas class="confetti" id="fx"></canvas>
+<div class="wrap">
+  <h1 id="title">ガチャ</h1>
+  <p class="sub" id="subtitle">ハンドルをタップしてまわしてね</p>
+
+  <div class="machine" aria-label="ガチャマシン">
+    <div class="globe" id="globe"></div>
+    <div class="body"><div class="label">GACHA</div><button class="handle" id="handle" type="button" aria-label="ガチャをまわす"></button><div class="slot"></div></div>
+    <div class="cap" id="cap"></div>
+  </div>
+
+  <div class="result" id="result" hidden aria-live="polite">
+    <span class="rank" id="rank"></span>
+    <div class="prize" id="prize"></div>
+    <p class="note" id="rmsg"></p>
+  </div>
+  <p class="stock" id="stock"></p>
+  <button class="big" id="spin" type="button">ガチャをまわす</button>
+
+  <div class="row" style="justify-content:center"><button class="ghost" id="openSetup" type="button">お店の方：景品の設定</button></div>
+
+  <section class="panel" id="setup" hidden>
+    <h2>景品の設定</h2>
+    <label for="sTitle">ガチャの名前<input id="sTitle" type="text" maxlength="30"></label>
+    <div class="prow head"><span></span><span>景品</span><span>確率</span><span>在庫</span><span></span></div>
+    <div id="prizes"></div>
+    <button class="ghost" id="addPrize" type="button">＋ 景品をふやす</button>
+    <label for="sMode">まわし方
+      <select id="sMode">
+        <option value="counter">お店の1台（タブレットなど）をみんなでまわす</option>
+        <option value="once">お客さんのスマホで、1人1回だけ</option>
+        <option value="free">何回でもまわせる（練習・あそび）</option>
+      </select>
+    </label>
+    <p class="note" id="modeNote"></p>
+    <div class="row"><button class="big" id="save" type="button" style="flex:1">この内容で使う</button></div>
+    <div class="row"><button class="ghost" id="resetStock" type="button">在庫と記録をリセット</button><button class="ghost" id="closeSetup" type="button">とじる</button></div>
+    <div id="shareBox" hidden>
+      <p class="note">お客さんに読んでもらうQRコード（印刷やスクショでOK）</p>
+      <div id="qr"></div>
+      <div class="row" style="margin-top:8px"><button class="ghost" id="copyLink" type="button">リンクをコピー</button></div>
+    </div>
+    <p class="note" id="log"></p>
+  </section>
+
+  <footer>景品の内容と確率はお店が決めています。データはこの端末の中だけに保存され、どこにも送信しません。<br>HMSUの道具箱</footer>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+"use strict";
+var DEF={t:'ハロウィンガチャ',m:'counter',p:[{n:'お菓子つめあわせ',w:5,s:3,c:'#ff5d73'},{n:'ドリンク1杯無料',w:15,s:10,c:'#ffb703'},{n:'100円引き',w:30,s:0,c:'#2ec4b6'},{n:'あめ1こ',w:50,s:0,c:'#8e7dff'}]};
+var store={get:function(k,f){try{var v=JSON.parse(localStorage.getItem('kuji-'+k));return v==null?f:v;}catch(e){return f;}},set:function(k,v){try{localStorage.setItem('kuji-'+k,JSON.stringify(v));}catch(e){}}};
+function enc(o){return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function dec(s){try{s=s.replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(decodeURIComponent(escape(atob(s))));}catch(e){return null;}}
+function hash(o){var s=JSON.stringify(o),h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(36);}
+// 設定は URL の #g= にのせる（お客さんのスマホにも同じ景品が届く）
+var fromUrl=location.hash.indexOf('#g=')===0?dec(location.hash.slice(3)):null;
+var C=fromUrl||store.get('cfg',DEF),KEY=hash(C);
+var used=store.get('used-'+KEY,{}),log=store.get('log-'+KEY,[]),played=store.get('played-'+KEY,false);
+function left(i){var p=C.p[i];return p.s>0?Math.max(0,p.s-(used[i]||0)):Infinity;}
+function pick(){var tot=0,ok=[];C.p.forEach(function(p,i){if(left(i)>0&&p.w>0){ok.push(i);tot+=Number(p.w);}});if(!ok.length)return -1;
+  var r=Math.random()*tot;for(var k=0;k<ok.length;k++){r-=Number(C.p[ok[k]].w);if(r<0)return ok[k];}return ok[ok.length-1];}
+// ---------- 画面 ----------
+var $=function(id){return document.getElementById(id);};
+function show(){$('title').textContent=C.t||'ガチャ';document.title=C.t||'ガチャ';
+  var g=$('globe');g.innerHTML='';for(var k=0;k<14;k++){var b=document.createElement('i');var p=C.p[k%C.p.length];b.style.background=p.c;var ang=k*2.39996,rad=Math.sqrt((k+0.5)/14)*36;b.style.left=(38+Math.cos(ang)*rad)+'%';b.style.top=(44+Math.sin(ang)*rad*0.9)+'%';b.style.transform='rotate('+(k*47)+'deg)';g.appendChild(b);}
+  var st=C.p.filter(function(p){return p.s>0;}).map(function(p){var i=C.p.indexOf(p);return p.n+' のこり'+left(i);});
+  $('stock').textContent=C.m==='once'?'':st.join('　');
+  var done=C.m==='once'&&played;$('spin').disabled=done;$('spin').textContent=done?'このスマホではもうまわしました':'ガチャをまわす';
+  if(done&&played.n){$('result').hidden=false;$('prize').textContent=played.n;$('rank').textContent='あなたの結果';$('rank').style.background=played.c||'#999';$('rmsg').textContent='この画面をお店の人に見せてね（'+played.t+'）';}}
+var busy=false;
+function spin(){if(busy)return;if(C.m==='once'&&played)return;var i=pick();
+  if(i<0){$('result').hidden=false;$('rank').textContent='おしらせ';$('rank').style.background='#999';$('prize').textContent='景品がなくなりました';$('rmsg').textContent='';return;}
+  busy=true;$('result').hidden=true;var p=C.p[i],cap=$('cap'),h=$('handle');
+  h.style.transform='translateX(-50%) rotate('+(((h._r||0)+360))+'deg)';h._r=(h._r||0)+360;tone([330,392,440,523]);
+  $('globe').animate([{transform:'rotate(0)'},{transform:'rotate(-4deg)'},{transform:'rotate(4deg)'},{transform:'rotate(0)'}],{duration:700});
+  cap.className='cap';cap.style.background='linear-gradient('+p.c+' 50%,#fff 50%)';
+  setTimeout(function(){cap.className='cap drop';tone([196]);},700);
+  setTimeout(function(){busy=false;cap.className='cap';used[i]=(used[i]||0)+1;store.set('used-'+KEY,used);
+    var t=new Date().toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    log.push({n:p.n,t:t});store.set('log-'+KEY,log.slice(-500));
+    if(C.m==='once'){played={n:p.n,c:p.c,t:t};store.set('played-'+KEY,played);}
+    $('result').hidden=false;$('prize').textContent=p.n;$('rank').textContent=rare(i)?'あたり！':'けっか';$('rank').style.background=p.c;
+    $('rmsg').textContent=C.m==='once'?'この画面をお店の人に見せてね（'+t+'）':'';
+    if(rare(i)){burst(p.c);tone([523,659,784,1047,1319]);}else tone([523,659]);show();},1500);}
+function rare(i){var tot=0;C.p.forEach(function(p){tot+=Number(p.w);});return C.p[i].w/tot<=0.2;}
+// ---------- 音と紙ふぶき ----------
+var AC=null;function tone(fs){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();fs.forEach(function(f,k){var o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+k*0.09;o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(0.06,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.25);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+0.26);});}catch(e){}}
+var fx=$('fx'),fctx=fx.getContext('2d'),bits=[];
+function burst(col){fx.width=innerWidth;fx.height=innerHeight;for(var k=0;k<120;k++)bits.push({x:innerWidth/2,y:innerHeight*0.45,vx:(Math.random()-0.5)*14,vy:-Math.random()*14-4,c:k%2?col:['#ffb703','#2ec4b6','#8e7dff','#ff5d73'][k%4],r:Math.random()*6,l:90+Math.random()*40});if(bits.length===120)requestAnimationFrame(fall);}
+function fall(){fctx.clearRect(0,0,fx.width,fx.height);bits.forEach(function(b){b.x+=b.vx;b.y+=b.vy;b.vy+=0.35;b.vx*=0.99;b.l--;b.r+=0.2;fctx.save();fctx.translate(b.x,b.y);fctx.rotate(b.r);fctx.fillStyle=b.c;fctx.fillRect(-4,-6,8,12);fctx.restore();});
+  bits=bits.filter(function(b){return b.l>0&&b.y<fx.height+20;});if(bits.length)requestAnimationFrame(fall);else fctx.clearRect(0,0,fx.width,fx.height);}
+// ---------- 設定 ----------
+function row(p){var d=document.createElement('div');d.className='prow';
+  d.innerHTML='<input type="color" aria-label="色"><input type="text" maxlength="24" aria-label="景品の名前"><input type="number" min="0" step="1" aria-label="確率（重み）"><input type="number" min="0" step="1" aria-label="在庫（0は無制限）"><button type="button" aria-label="けす">✕</button>';
+  var f=d.querySelectorAll('input');f[0].value=p.c;f[1].value=p.n;f[2].value=p.w;f[3].value=p.s;d.querySelector('button').onclick=function(){d.remove();};$('prizes').appendChild(d);}
+function openSetup(){$('setup').hidden=false;$('sTitle').value=C.t;$('sMode').value=C.m;$('prizes').innerHTML='';C.p.forEach(row);modeNote();shareBox();renderLog();$('setup').scrollIntoView({behavior:'smooth'});}
+function modeNote(){var m=$('sMode').value;$('modeNote').textContent=m==='counter'?'在庫はこの端末で数えます。お店の1台をお客さんにまわしてもらう使い方です。':m==='once'?'QRコードを読んだスマホごとに1回だけまわせます。在庫はスマホごとに数えるため、全体の在庫は数えられません。当たりの数を必ず守りたいときは「お店の1台」を使ってください。':'何回でもまわせます。';}
+function readForm(){var ps=[];Array.prototype.forEach.call($('prizes').children,function(d){var f=d.querySelectorAll('input');if(!f[1].value.trim())return;ps.push({c:f[0].value,n:f[1].value.trim(),w:Math.max(0,Number(f[2].value)||0),s:Math.max(0,Math.floor(Number(f[3].value)||0))});});
+  return {t:$('sTitle').value.trim()||'ガチャ',m:$('sMode').value,p:ps.length?ps:DEF.p};}
+function shareUrl(){return location.href.split('#')[0]+'#g='+enc(C);}
+function shareBox(){var on=C.m==='once';$('shareBox').hidden=!on;if(!on)return;$('qr').innerHTML='';try{new QRCode($('qr'),{text:shareUrl(),width:220,height:220});}catch(e){$('qr').textContent='QRコードを作れませんでした。リンクをコピーして使ってください。';}}
+function renderLog(){var cnt={};log.forEach(function(l){cnt[l.n]=(cnt[l.n]||0)+1;});var s=Object.keys(cnt).map(function(k){return k+' '+cnt[k]+'回';}).join('、');$('log').textContent=log.length?'この端末の記録：全'+log.length+'回（'+s+'）':'';}
+$('openSetup').onclick=openSetup;$('closeSetup').onclick=function(){$('setup').hidden=true;};$('addPrize').onclick=function(){row({n:'',w:10,s:0,c:'#'+((Math.random()*0xffffff)|0).toString(16).padStart(6,'0')});};
+$('sMode').onchange=modeNote;
+$('save').onclick=function(){C=readForm();KEY=hash(C);used=store.get('used-'+KEY,{});log=store.get('log-'+KEY,[]);played=store.get('played-'+KEY,false);store.set('cfg',C);
+  history.replaceState(null,'',C.m==='once'?'#g='+enc(C):location.pathname);show();shareBox();renderLog();$('result').hidden=true;};
+$('resetStock').onclick=function(){if(!confirm('在庫と記録をリセットしますか？'))return;used={};log=[];played=false;store.set('used-'+KEY,used);store.set('log-'+KEY,log);store.set('played-'+KEY,false);show();renderLog();$('result').hidden=true;};
+$('copyLink').onclick=function(){var u=shareUrl();if(navigator.clipboard)navigator.clipboard.writeText(u).then(function(){$('copyLink').textContent='コピーしました';});};
+$('spin').onclick=spin;$('handle').onclick=spin;
+if(fromUrl)$('openSetup').parentNode.hidden=true;
+show();
+</script>
+</body>
+</html>
