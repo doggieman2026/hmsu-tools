@@ -38,14 +38,14 @@ button:focus-visible{outline:3px solid #fff;outline-offset:3px}
 .tc{position:fixed;bottom:max(16px,env(safe-area-inset-bottom));display:none;gap:12px}
 .tc button{width:72px;height:72px;border-radius:50%;border:3px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;font:inherit;font-weight:900;font-size:22px}
 .tc button.red{background:rgba(214,51,74,.6)}
-.tc.l{left:16px}.tc.r{right:16px}
+.tc.l{left:16px}.tc.r{right:16px;align-items:flex-end}.tc button.big{width:104px;height:104px;font-size:34px}.tc button.sk{font-size:14px;margin-bottom:40px}
 @media (pointer:coarse){.tc{display:flex}}
 </style>
 </head>
 <body>
 <canvas id="cv"></canvas>
-<div class="tc l" id="tcl" hidden><button data-k="L" type="button" aria-label="Left">◀</button><button data-k="R" type="button" aria-label="Right">▶</button></div>
-<div class="tc r" id="tcr" hidden><button data-k="S" type="button" aria-label="Skill" style="font-size:13px">SKILL</button><button data-k="A" class="red" type="button" aria-label="Attack">⚔</button><button data-k="J" type="button" aria-label="Jump">▲</button></div>
+<div class="tc l" id="tcl" hidden></div>
+<div class="tc r" id="tcr" hidden><button data-k="S" type="button" aria-label="Skill" class="sk">SKILL</button><button data-k="J" type="button" aria-label="Jump" class="red big">▲</button></div>
 <div class="over dim" id="title">
   <h1>BONE TO <span>BEAST</span></h1>
   <p>Defeat monsters, drink their blood, graft their parts onto your body.<br>Find the right mix and awaken into a legend.</p>
@@ -230,7 +230,7 @@ function update(dt){var p=G.p,s=stat();G.t+=dt;p.max=maxHp();var hb=heroBox();
   if(p.ground){if(landed&&p.slam)slam(p.meteor?240:200,p.meteor?2:1.2,p.meteor?'#ff8c3a':'#ffb070');p.vy=0;p.jumps=0;}
   if(p.inv>0)p.inv-=dt;if(p.cd>0)p.cd-=dt;if(p.atkT>0)p.atkT-=dt;if(p.comboT>0)p.comboT-=dt;if(p.swing>0)p.swing-=dt;
   p.walk+=Math.abs(p.vx)*dt*0.045;var regen=s.regen+(G.parts.legs==='plantLegs'&&Math.abs(p.vx)<20&&p.ground?6:0);if(regen)p.hp=Math.min(p.max,p.hp+regen*dt);
-  if(keys.KeyJ||tch.A)attack();
+  if(keys.KeyJ||tch.A)attack();else autoAttack();
   while(G.chunks*900<p.x+2000)addChunk();
   if(!G.lock&&p.x>G.wave*700+500)startWave();
   if(G.lock){G.lock.t+=dt;while(G.lock.q.length&&G.lock.q[0].at<=G.lock.t)spawn(G.lock.q.shift());if(!G.lock.q.length&&!G.en.length){G.lock=null;p.hp=Math.min(p.max,p.hp+p.max*0.12);setBanner('GO →');}}
@@ -458,7 +458,7 @@ function over(){G.state='dead';if(G.score>hi){hi=G.score;store.set('hi',hi);}
       '<b>'+formName()+'</b><span>'+(G.history.length?G.history.map(function(k){return PARTS[k].name;}).join(' → '):'No grafts')+'</span>');b.style.pointerEvents='none';el.appendChild(b);
     $('dead').hidden=false;['tcl','tcr'].forEach(function(i){$(i).hidden=true;});},900);}
 var last=performance.now(),acc=0,STEP=1/60;
-function frame(now){acc+=Math.min(0.1,(now-last)/1000);last=now;while(acc>=STEP){if(G&&G.state==='play')update(STEP);acc-=STEP;}draw();requestAnimationFrame(frame);}
+function frame(now){acc+=Math.min(0.1,(now-last)/1000);last=now;while(acc>=STEP){if(G&&G.state==='play')update(STEP);acc-=STEP;}draw();if(G)drawStick();requestAnimationFrame(frame);}
 var lastStarter='bone';
 function start(k){lastStarter=k;newGame(k);$('title').hidden=true;$('dead').hidden=true;['tcl','tcr'].forEach(function(i){$(i).hidden=false;});last=performance.now();}
 // ======================= input =======================
@@ -473,6 +473,14 @@ addEventListener('blur',function(){keys={};tch={};});
 Array.prototype.forEach.call(document.querySelectorAll('.tc button'),function(b){var k=b.dataset.k;
   b.addEventListener('pointerdown',function(e){e.preventDefault();tch[k]=true;if(!G||G.state!=='play')return;if(k==='J')jump();if(k==='S')skill();if(k==='A')attack();});
   ['pointerup','pointercancel','pointerleave'].forEach(function(t){b.addEventListener(t,function(){tch[k]=false;});});});
+var TOUCH=matchMedia('(pointer:coarse)').matches,stick=null;
+cv.addEventListener('pointerdown',function(e){if(!G||G.state!=='play')return;TOUCH=true;if(e.clientX<W*0.6){stick={id:e.pointerId,x0:e.clientX,y0:e.clientY,x:e.clientX,y:e.clientY};}});
+cv.addEventListener('pointermove',function(e){if(!stick||e.pointerId!==stick.id)return;stick.x=e.clientX;stick.y=e.clientY;var dx=stick.x-stick.x0;if(Math.abs(dx)>60)stick.x0=stick.x-Math.sign(dx)*60;tch.L=dx<-14;tch.R=dx>14;
+  if(stick.y0-stick.y>55&&!stick.jumped){stick.jumped=1;jump();}if(stick.y0-stick.y<25)stick.jumped=0;});
+['pointerup','pointercancel'].forEach(function(t){cv.addEventListener(t,function(e){if(stick&&e.pointerId===stick.id){stick=null;tch.L=tch.R=false;}});});
+function autoAttack(){if(!TOUCH||!G||G.state!=='play')return;var p=G.p,s=stat(),r=(s.ranged||s.kind==='breath'?320:s.kind==='roots'?s.range:s.range+30);
+  for(var i=0;i<G.en.length;i++){var e=G.en[i],dx=e.x-p.x;if(Math.abs(dx)<r+e.w/2&&Math.abs((e.y-e.h/2)-(p.y-40))<120){if(!(tch.L||tch.R))p.face=dx>0?1:-1;attack();return;}}}
+function drawStick(){if(!stick)return;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.globalAlpha=0.35;ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(stick.x0,stick.y0,60,0,7);ctx.stroke();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(stick.x0+Math.max(-60,Math.min(60,stick.x-stick.x0)),stick.y0+Math.max(-60,Math.min(60,stick.y-stick.y0)),26,0,7);ctx.fill();ctx.globalAlpha=1;}
 $('again').addEventListener('click',function(){start(lastStarter);});$('toTitle').addEventListener('click',function(){$('dead').hidden=true;G=null;buildTitle();$('title').hidden=false;});
 buildTitle();requestAnimationFrame(frame);
 </script>
