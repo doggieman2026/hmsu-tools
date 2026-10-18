@@ -7,12 +7,20 @@ const P={easy:[4,10,'やさしめ','3〜4さい'],normal:[5,14,'ふつう','5〜
 const levels=Array.from({length:N},(_,i)=>Math.round(P[0]+i*((P[1]-P[0])/(N-1))));
 const seedBase=[...name].reduce((a,c)=>a*31+c.charCodeAt(0)>>>0,7)^{easy:1,normal:2,hard:3}[lv]*99991;
 const seeds=levels.map((_,i)=>(seedBase+i*7919)>>>0);
-const THEME=process.argv[6]||'';const HW=THEME==='halloween';
-const C=HW?['#ff8a3d','#9b6bd6','#ffc94d','#7bc96f','#ff8a3d','#b58cff']:['#f4a7b9','#8fd3c1','#ffd166','#9cc5ff','#c9a7f4','#ffb38a'];
+const THEME=process.argv[6]||'';const HW=THEME==='halloween'||THEME==='christmas'||THEME==='newyear';
+const C=THEME==='christmas'?['#e85a5a','#4fae6a','#ffd166','#7fb8e8','#e85a5a','#4fae6a']:THEME==='newyear'?['#e8504a','#ffc94d','#f4a7b9','#4fae6a','#e8504a','#ffc94d']:HW?['#ff8a3d','#9b6bd6','#ffc94d','#7bc96f','#ff8a3d','#b58cff']:['#f4a7b9','#8fd3c1','#ffd166','#9cc5ff','#c9a7f4','#ffb38a'];
 // halloween icons (original simple shapes)
 const pumpkin=(x,y,r)=>`<g transform="translate(${x},${y})"><ellipse cx="${-r*.45}" cy="0" rx="${r*.55}" ry="${r*.8}" fill="#ff8a3d" stroke="#3a3a3a" stroke-width="${r/10}"/><ellipse cx="${r*.45}" cy="0" rx="${r*.55}" ry="${r*.8}" fill="#ff8a3d" stroke="#3a3a3a" stroke-width="${r/10}"/><ellipse cx="0" cy="0" rx="${r*.55}" ry="${r*.85}" fill="#ffa25a" stroke="#3a3a3a" stroke-width="${r/10}"/><rect x="${-r*.1}" y="${-r*1.15}" width="${r*.2}" height="${r*.35}" rx="${r*.05}" fill="#6b8e3a"/><path d="M${-r*.35} ${-r*.15}l${r*.15} ${-r*.2}l${r*.15} ${r*.2}zM${r*.05} ${-r*.15}l${r*.15} ${-r*.2}l${r*.15} ${r*.2}z" fill="#3a3a3a"/><path d="M${-r*.4} ${r*.25}q${r*.4} ${r*.35} ${r*.8} 0" stroke="#3a3a3a" stroke-width="${r/9}" fill="none" stroke-linecap="round"/></g>`;
 const ghost=(x,y,r)=>`<g transform="translate(${x},${y})"><path d="M${-r*.7} ${r*.9}V0a${r*.7} ${r*.7} 0 0 1 ${r*1.4} 0V${r*.9}l${-r*.35} ${-r*.25}l${-r*.35} ${r*.25}l${-r*.35} ${-r*.25}z" fill="#fff" stroke="#3a3a3a" stroke-width="${r/10}" stroke-linejoin="round"/><circle cx="${-r*.25}" cy="${-r*.05}" r="${r*.1}" fill="#3a3a3a"/><circle cx="${r*.25}" cy="${-r*.05}" r="${r*.1}" fill="#3a3a3a"/></g>`;
 const bat=(x,y,r)=>`<path transform="translate(${x},${y})" d="M0 ${-r*.2}C${r*.3} ${-r*.6} ${r*.9} ${-r*.5} ${r*1.2} ${-r*.1}C${r*.9} 0 ${r*.7} ${r*.1} ${r*.6} ${r*.35}C${r*.45} ${r*.15} ${r*.25} ${r*.15} 0 ${r*.35}C${-r*.25} ${r*.15} ${-r*.45} ${r*.15} ${-r*.6} ${r*.35}C${-r*.7} ${r*.1} ${-r*.9} 0 ${-r*1.2} ${-r*.1}C${-r*.9} ${-r*.5} ${-r*.3} ${-r*.6} 0 ${-r*.2}z" fill="#5a4a78"/>`;
+const SW=(r)=>`stroke="#3a3a3a" stroke-width="${r/10}" stroke-linejoin="round"`;
+const tree=(x,y,r)=>`<g transform="translate(${x},${y})"><rect x="${-r*.15}" y="${r*.6}" width="${r*.3}" height="${r*.35}" fill="#8a5a3a" ${SW(r)}/><path d="M0 ${-r}L${r*.55} ${-r*.2}H${r*.3}L${r*.75} ${r*.6}H${-r*.75}L${-r*.3} ${-r*.2}H${-r*.55}Z" fill="#4fae6a" ${SW(r)}/><circle cx="${-r*.2}" cy="${r*.1}" r="${r*.09}" fill="#e85a5a"/><circle cx="${r*.25}" cy="${r*.35}" r="${r*.09}" fill="#ffd166"/><circle cx="${r*.05}" cy="${-r*.4}" r="${r*.08}" fill="#7fb8e8"/></g>`;
+const present=(x,y,r)=>`<g transform="translate(${x},${y})"><rect x="${-r*.7}" y="${-r*.4}" width="${r*1.4}" height="${r*1.1}" fill="#e85a5a" ${SW(r)}/><rect x="${-r*.12}" y="${-r*.4}" width="${r*.24}" height="${r*1.1}" fill="#ffd166"/><path d="M0 ${-r*.4}C${-r*.5} ${-r*1} ${-r*.7} ${-r*.4} 0 ${-r*.4}C${r*.7} ${-r*.4} ${r*.5} ${-r*1} 0 ${-r*.4}" fill="#ffd166" ${SW(r)}/></g>`;
+const snowman=(x,y,r)=>`<g transform="translate(${x},${y})"><circle cy="${r*.35}" r="${r*.6}" fill="#fff" ${SW(r)}/><circle cy="${-r*.5}" r="${r*.42}" fill="#fff" ${SW(r)}/><circle cx="${-r*.14}" cy="${-r*.56}" r="${r*.06}" fill="#3a3a3a"/><circle cx="${r*.14}" cy="${-r*.56}" r="${r*.06}" fill="#3a3a3a"/><path d="M0 ${-r*.45}l${r*.3} ${r*.06}l${-r*.3} ${r*.06}z" fill="#ff8a3d"/><rect x="${-r*.45}" y="${-r*.2}" width="${r*.9}" height="${r*.14}" fill="#e85a5a"/></g>`;
+const mochi=(x,y,r)=>`<g transform="translate(${x},${y})"><rect x="${-r*.8}" y="${r*.35}" width="${r*1.6}" height="${r*.35}" fill="#d9a441" ${SW(r)}/><ellipse cy="${r*.15}" rx="${r*.8}" ry="${r*.35}" fill="#fff" ${SW(r)}/><ellipse cy="${-r*.3}" rx="${r*.6}" ry="${r*.3}" fill="#fff" ${SW(r)}/><circle cy="${-r*.68}" r="${r*.22}" fill="#ff9a3d" ${SW(r)}/><path d="M${-r*.05} ${-r*.9}l${r*.25} ${-r*.12}" stroke="#4fae6a" stroke-width="${r/7}"/></g>`;
+const fuji=(x,y,r)=>`<g transform="translate(${x},${y})"><circle cx="${r*.45}" cy="${-r*.45}" r="${r*.35}" fill="#e8504a"/><path d="M${-r} ${r*.6}L${-r*.25} ${-r*.35}H${r*.25}L${r} ${r*.6}Z" fill="#7fb8e8" ${SW(r)}/><path d="M${-r*.25} ${-r*.35}H${r*.25}L${r*.42} ${-r*.08}L${r*.18} 0L0 ${-r*.12}L${-r*.18} 0L${-r*.42} ${-r*.08}Z" fill="#fff" ${SW(r)}/></g>`;
+const koma=(x,y,r)=>`<g transform="translate(${x},${y})"><path d="M${-r*.8} ${-r*.1}L0 ${-r*.5}L${r*.8} ${-r*.1}L0 ${r*.7}Z" fill="#ffc94d" ${SW(r)}/><path d="M${-r*.8} ${-r*.1}L${r*.8} ${-r*.1}" stroke="#e8504a" stroke-width="${r/6}"/><path d="M0 ${-r*.5}V${-r*.85}" stroke="#3a3a3a" stroke-width="${r/7}"/></g>`;
+const ICONS=THEME==='christmas'?[tree,present,snowman]:THEME==='newyear'?[mochi,fuji,koma]:[pumpkin,ghost,bat];
 const star=(x,y,r,f)=>{let p='';for(let i=0;i<10;i++){const a=Math.PI/5*i-Math.PI/2,rr=i%2?r*.45:r;p+=`${x+rr*Math.cos(a)},${y+rr*Math.sin(a)} `;}return `<polygon points="${p}" fill="${f}" stroke="#3a3a3a" stroke-width="${r/9}" stroke-linejoin="round"/>`;};
 function maze(cols,seed,ans,cell){const rows=Math.round(cols*1.3),pad=48;const W=cols*cell+pad*2,H=rows*cell+pad*2;const w=makeMaze(cols,rows,seed);let d='';
 w.forEach((x,i)=>{const X=pad+(i%cols)*cell,Y=pad+((i/cols)|0)*cell;if(x[0]&&i!==0)d+=`M${X} ${Y}h${cell}`;if(x[1])d+=`M${X+cell} ${Y}v${cell}`;if(x[2]&&i!==cols*rows-1)d+=`M${X} ${Y+cell}h${cell}`;if(x[3])d+=`M${X} ${Y}v${cell}`;});
@@ -27,15 +35,15 @@ const deco=(n)=>{let s='';const r=(i)=>{let x=Math.sin(seedBase+i*99.7)*10000;re
 let pages='';
 // 表紙
 let dots='';for(let i=0;i<N;i++){dots+=`<div class="dot" style="border-color:${C[(i/10|0)%6]}">${i+1}</div>`;}
-pages+=`<section class="p cover"><svg class="bg" width="100%" height="100%">${deco(26)}</svg>${HW?`<svg class="hw" viewBox="0 0 210 297">${pumpkin(30,262,16)+pumpkin(180,265,13)+ghost(178,40,13)+ghost(28,52,10)+bat(105,22,9)+bat(188,132,6)+bat(22,150,6)}</svg>`:''}
+pages+=`<section class="p cover"><svg class="bg" width="100%" height="100%">${deco(26)}</svg>${HW?`<svg class="hw" viewBox="0 0 210 297">${ICONS[0](30,262,16)+ICONS[0](180,265,13)+ICONS[1](178,40,13)+ICONS[1](28,52,10)+ICONS[2](105,22,9)+ICONS[2](188,132,6)+ICONS[2](22,150,6)}</svg>`:''}
 <div class="ribbon">${P[2]}・${P[3]}</div>
 <div class="nameplate"><span class="nm">${name}</span><span class="no">の</span></div>
-<h1 class="big">${HW?'ハロウィンめいろ':'めいろドリル'}</h1>
+<h1 class="big">${THEME==='christmas'?'クリスマスめいろ':THEME==='newyear'?'おしょうがつめいろ':HW?'ハロウィンめいろ':'めいろドリル'}</h1>
 <div class="stars"><svg viewBox="0 0 300 60" width="300">${star(40,30,24,'#f4a7b9')+star(150,30,28,'#ffd166')+star(260,30,24,'#8fd3c1')}</svg></div>
 <p class="howto">できたら ばんごうに いろを ぬろう！</p><div class="dots">${dots}</div>
 <p class="cnt">ぜんぶで ${N}もん</p></section>`;
 levels.forEach((c,i)=>{const st=1+Math.floor(i*5/N);
-pages+=`<section class="p"><header><div class="tag" style="background:${C[i%6]}">${name}の めいろ</div>${HW?`<svg width="16mm" height="14mm" viewBox="-20 -20 40 36">${i%3===0?pumpkin(0,0,14):i%3===1?ghost(0,-2,13):bat(0,0,14)}</svg>`:''}<div class="num">No.${i+1}<span>${'★'.repeat(st)}<i>${'★'.repeat(5-st)}</i></span></div></header>
+pages+=`<section class="p"><header><div class="tag" style="background:${C[i%6]}">${name}の めいろ</div>${HW?`<svg width="16mm" height="14mm" viewBox="-20 -20 40 36">${ICONS[i%3](0,i%3===1?-2:0,i%3===1?13:14)}</svg>`:''}<div class="num">No.${i+1}<span>${'★'.repeat(st)}<i>${'★'.repeat(5-st)}</i></span></div></header>
 <div class="m">${maze(c,seeds[i],false,30)}</div>
 <footer><div class="date">　　がつ　　にち</div><div class="seal">できたら<br>シールを<br>はろう</div></footer></section>`;});
 let ans='';levels.forEach((c,i)=>{if(i%6===0)ans+=(i?'</div></section>':'')+`<section class="p"><header><div class="tag" style="background:#ffd166">こたえ</div></header><div class="g">`;ans+=`<div class="a"><p>No.${i+1}</p>${maze(c,seeds[i],true,30)}</div>`;});
@@ -50,7 +58,7 @@ header{width:100%;display:flex;justify-content:space-between;align-items:center}
 footer{width:100%;display:flex;justify-content:space-between;align-items:center}
 .date{font-size:14pt;border-bottom:2px dashed #aaa;padding:0 4mm 1mm}
 .seal{width:30mm;height:30mm;border-radius:50%;border:2.5px dashed #f4a7b9;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10pt;font-weight:700;color:#e58aa0;line-height:1.3}
-.cover{justify-content:center;gap:7mm;background:${HW?'#fff4e8':'#fffaf0'}}.cover .hw{position:absolute!important;left:0;top:0;width:100%;height:100%}.cover .bg{position:absolute;inset:0}.cover>*{position:relative}
+.cover{justify-content:center;gap:7mm;background:${THEME==='christmas'?'#f2f8f2':THEME==='newyear'?'#fff6ee':HW?'#fff4e8':'#fffaf0'}}.cover .hw{position:absolute!important;left:0;top:0;width:100%;height:100%}.cover .bg{position:absolute;inset:0}.cover>*{position:relative}
 .ribbon{background:#8fd3c1;border:3px solid #3a3a3a;border-radius:20mm;padding:2mm 10mm;font-size:16pt;font-weight:900}
 .nameplate{background:#fff;border:4px solid #3a3a3a;border-radius:14mm;padding:6mm 14mm;box-shadow:0 3mm 0 #f4a7b9;display:flex;align-items:baseline;gap:3mm}
 .nm{font-size:${name.length>6?40:56}pt;font-weight:900;color:#e0703a}.no{font-size:28pt;font-weight:900}
