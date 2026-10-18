@@ -20,7 +20,7 @@ M.update(NEW)
 MID={'fmSlBloom':'m1_00','fmSlIron':'m1_01','fmSlGhost':'m1_02','fmSkSpear':'m1_03','fmSkHeavy':'m1_04','fmSkCount':'m1_05','fmGbArcher':'m1_10','fmGbGeneral':'m1_11','fmGbSorc':'m1_12','fmBsWolf':'m1_13','fmBsLion':'m1_14','fmBsDrag':'m1_15',
 'fmPlPriest':'m2_00','fmPlWarrior':'m2_01','fmPlQueen':'m2_02','fmBtButter':'m2_03','fmBtGarg':'m2_04','fmBtVamp':'m2_05','fmDrYoung':'m2_10','fmDrRock':'m2_11','fmDrBlack':'m2_12','fmGlMoss':'m2_13','fmGlSteel':'m2_14','fmGlAmethyst':'m2_15'}
 M.update(MID)
-SC=0.5
+SC=0.8
 ims={}
 EV=['fSlGrass','fSlRock','fSlZombie','fSlDeath','fSkMoss','fSkWraith','fSkKnight','fSkSteel','fSkVamp',None,'fGbForest','fGbDruid','fGbHob','fGbKing','fGbShaman','fGbDemon','fBsForest','fBsSacred','fBsRock','fBsFire']
 for i,k in enumerate(EV):
