@@ -20,6 +20,12 @@ M.update(NEW)
 MID={'fmSlBloom':'m1_00','fmSlIron':'m1_01','fmSlGhost':'m1_02','fmSkSpear':'m1_03','fmSkHeavy':'m1_04','fmSkCount':'m1_05','fmGbArcher':'m1_10','fmGbGeneral':'m1_11','fmGbSorc':'m1_12','fmBsWolf':'m1_13','fmBsLion':'m1_14','fmBsDrag':'m1_15',
 'fmPlPriest':'m2_00','fmPlWarrior':'m2_01','fmPlQueen':'m2_02','fmBtButter':'m2_03','fmBtGarg':'m2_04','fmBtVamp':'m2_05','fmDrYoung':'m2_10','fmDrRock':'m2_11','fmDrBlack':'m2_12','fmGlMoss':'m2_13','fmGlSteel':'m2_14','fmGlAmethyst':'m2_15'}
 M.update(MID)
+
+RIGP={'rA_head':('pr_00',None),'rA_torso':('pr_01',None),'rA_arm':('pr_02','tr'),'rA_arm2':('pr_03','tr'),'rA_thigh':('pr_04','tb'),'rA_shin':('pr_05','tb'),
+'rB_head':('pr_06',None),'rB_knife':('pr_07','lr'),'rB_torso':('pr_08',None),'rB_upper':('pr_09','tbr'),'rB_fore':('pr_10','lr'),'rB_thigh':('pr_11','tb'),'rB_shin':('pr_12','tb'),
+'rC_head':('pr_13',None),'rC_torso':('pr_14',None),'rC_upper':('pr_15','tb'),'rC_fore':('pr_16','lr'),'rC_thigh':('pr_17','tb'),'rC_shin':('pr_18','tb'),'rC_bow':('pr_19',None),
+'rD_head':('pr_20',None),'rD_torso':('pr_21',None),'rD_upper':('pr_22','tb'),'rD_fore':('pr_23','lr'),'rD_thigh':('pr_24','tb'),'rD_shin':('pr_25','tb')}
+for k,(f,m) in RIGP.items(): M[k]=f
 SC=0.8
 ims={}
 EV=['fSlGrass','fSlRock','fSlZombie','fSlDeath','fSkMoss','fSkWraith','fSkKnight','fSkSteel','fSkVamp',None,'fGbForest','fGbDruid','fGbHob','fGbKing','fGbShaman','fGbDemon','fBsForest','fBsSacred','fBsRock','fBsFire']
@@ -30,7 +36,7 @@ for k,f in M.items():
   m=a[...,3]>128;m2=ndimage.binary_erosion(m,iterations=1)
   a[...,3]=np.where(m2,a[...,3],(a[...,3]*0.35).astype(np.uint8))
   im=Image.fromarray(a);im=im.crop(im.getbbox())
-  s=1.0 if (k.startswith('f') or k.startswith('st')) else SC
+  s=1.0 if (k.startswith('f') or k.startswith('st') or k.startswith('r')) else SC
   im=im.resize((max(1,round(im.width*s)),max(1,round(im.height*s))),Image.LANCZOS);ims[k]=im
 # segment endpoints via PCA
 def ends(im,leftfirst=False):
@@ -53,5 +59,16 @@ for k in ims:A.paste(ims[k],tuple(pos[k][:2]))
 A.save('/home/claude/hmsu-tools/bone-to-beast/art/atlas.webp',quality=88,method=6)
 seg={'skUpper':0,'skFore':0,'skThigh':0,'skShin':0,'gbFore':0,'gbShin':0,'wolfLeg':0,'wolfArm':0,'golemFist':1,'goblinArm':1,'plantVine':1,'skClub':1,'gbKnife':1,'bsFrontU':0,'bsFrontL':0,'bsBackU':0,'bsBackL':0}
 for k,lf in seg.items():pos[k]+=ends(ims[k],lf==1)
+def ends2(im,mode):
+  a=np.array(im)[...,3]>100;ys,xs=np.nonzero(a);P=np.stack([xs,ys],1).astype(float)
+  def ext(v,hi=True):
+    q=np.quantile(v,0.97 if hi else 0.03);sel=P[v>=q] if hi else P[v<=q];return sel.mean(0)
+  if mode=='tb':p0=ext(ys,False);p1=ext(ys,True)
+  elif mode=='lr':p0=ext(xs,False);p1=ext(xs,True)
+  elif mode=='tr':p0=ext(ys,False);p1=ext(xs,True)
+  else:p0=ext(ys,False);p1=ext(xs+ys,True)
+  return [round(p0[0],1),round(p0[1],1),round(p1[0],1),round(p1[1],1)]
+for k,(f,m) in RIGP.items():
+  if m:pos[k]+=ends2(ims[k],m)
 open('atlas.json','w').write(json.dumps(pos,separators=(',',':')));print(W,H)
 import os;print(os.path.getsize('/home/claude/hmsu-tools/bone-to-beast/art/atlas.webp'))
