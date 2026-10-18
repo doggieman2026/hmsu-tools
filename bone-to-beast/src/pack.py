@@ -16,6 +16,10 @@ NEW={'stSprout':'n1_00','fPlPetal':'n1_01','fPlWarden':'n1_02','fPlRoot':'n1_03'
 'stHatch':'n2_00','fDrForest':'n2_01','fDrEmerald':'n2_02','fDrRock':'n2_03','fDrEarth':'n2_04','fDrBlack':'n2_05','fDrShadow':'n2_06',
 'stPebble':'n2_10','fGlMoss':'n2_11','fGlTree':'n2_12','fGlIron':'n2_13','fGlOri':'n2_14','fGlObs':'n2_15','fGlRune':'n2_16'}
 M.update(NEW)
+
+MID={'fmSlBloom':'m1_00','fmSlIron':'m1_01','fmSlGhost':'m1_02','fmSkSpear':'m1_03','fmSkHeavy':'m1_04','fmSkCount':'m1_05','fmGbArcher':'m1_10','fmGbGeneral':'m1_11','fmGbSorc':'m1_12','fmBsWolf':'m1_13','fmBsLion':'m1_14','fmBsDrag':'m1_15',
+'fmPlPriest':'m2_00','fmPlWarrior':'m2_01','fmPlQueen':'m2_02','fmBtButter':'m2_03','fmBtGarg':'m2_04','fmBtVamp':'m2_05','fmDrYoung':'m2_10','fmDrRock':'m2_11','fmDrBlack':'m2_12','fmGlMoss':'m2_13','fmGlSteel':'m2_14','fmGlAmethyst':'m2_15'}
+M.update(MID)
 SC=0.5
 ims={}
 EV=['fSlGrass','fSlRock','fSlZombie','fSlDeath','fSkMoss','fSkWraith','fSkKnight','fSkSteel','fSkVamp',None,'fGbForest','fGbDruid','fGbHob','fGbKing','fGbShaman','fGbDemon','fBsForest','fBsSacred','fBsRock','fBsFire']
