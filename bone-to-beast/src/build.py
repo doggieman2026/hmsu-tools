@@ -8,7 +8,7 @@ def func(name):
     m=re.search(r'\n(function |var |// )',src[i+1:]);return src[i:i+1+m.start()]+'\n'
 head=src[:src.index('<div class="tc l"')]
 head=head.replace('<title>Bone to Beast</title>','<title>Beast Survivors</title>')
-overlays=between('<div class="over dim" id="title">','<script>')
+overlays='<button id="hopBtn" type="button" hidden style="position:fixed;right:22px;bottom:calc(max(18px,env(safe-area-inset-bottom)) + 10px);width:84px;height:84px;border-radius:50%;border:3px solid rgba(255,255,255,.5);background:rgba(214,51,74,.55);color:#fff;font:900 28px sans-serif;z-index:5">▲</button>\n'+between('<div class="over dim" id="title">','<script>')
 overlays=overlays.replace('<h1>BONE TO <span>BEAST</span></h1>','<h1>BEAST <span>SURVIVORS</span></h1>')
 script_head=between('<script>','var store=')
 js=script_head+between('var store=','// ======================= world & state')
