@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>おうち宝さがしメーカー</title>
+<meta name="description" content="子どもの名前入りで、おうちの中の宝さがしカードを作って印刷できます。クリスマスや誕生日のプレゼントの渡し方に。">
+<style>
+/* layout: 画面では上に設定、下にA4のプレビュー。印刷時はA4ページだけを出す */
+:root{--bg:#fff7ee;--card:#fff;--ink:#2d2630;--muted:#7b7180;--line:#efdcc8;--a:#e85a5a;--b:#4fae6a;--c:#ffd166;--font:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#1d1720;--card:#2a2230;--ink:#f6eef7;--muted:#b8acbd;--line:#43384a}}
+:root[data-theme="dark"]{--bg:#1d1720;--card:#2a2230;--ink:#f6eef7;--muted:#b8acbd;--line:#43384a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding:16px}
+h1{font-size:1.5rem;margin:.2em 0;text-align:center}
+.sub{color:var(--muted);text-align:center;margin:0 0 12px;font-size:.92rem}
+.panel{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:12px}
+label{font-weight:700;font-size:.92rem;display:block}
+input,select{font:inherit;width:100%;padding:8px 10px;border-radius:10px;border:2px solid var(--line);background:var(--bg);color:var(--ink)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.places{display:flex;flex-wrap:wrap;gap:6px}
+.places button{font:inherit;font-size:.9rem;border:2px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:4px 10px;cursor:pointer}
+.places button.on{background:var(--a);border-color:var(--a);color:#fff}
+.places button b{display:inline-block;min-width:1.2em}
+.hint{color:var(--muted);font-size:.85rem;margin:0}
+.go{font:inherit;font-weight:900;font-size:1.05rem;padding:12px;border:0;border-radius:12px;background:var(--a);color:#fff;cursor:pointer}
+.preview{margin-top:16px;display:grid;gap:16px;justify-items:center}
+.sheet{width:210mm;height:297mm;background:#fff;color:#2d2630;box-shadow:0 4px 18px rgba(0,0,0,.15);position:relative;overflow:hidden;transform-origin:top center}
+@media (max-width:860px){.preview{overflow-x:auto;justify-items:start}}
+.half{position:absolute;left:0;right:0;height:148.5mm;padding:12mm 14mm;display:flex;flex-direction:column;align-items:center;text-align:center}
+.half.top{top:0}.half.bot{top:148.5mm;border-top:2px dashed #bbb}
+.cut{position:absolute;left:4mm;top:146mm;font-size:9pt;color:#999}
+.no{position:absolute;left:12mm;top:9mm;width:16mm;height:16mm;border-radius:50%;color:#fff;font-weight:900;font-size:16pt;display:flex;align-items:center;justify-content:center;border:2px solid #2d2630}
+.to{font-size:14pt;font-weight:900;margin-top:4mm}
+.ttl{font-size:22pt;font-weight:900;margin:2mm 0;letter-spacing:1px}
+.msg{font-size:15pt;font-weight:700;line-height:1.7;margin:2mm 0}
+.pic{width:62mm;height:62mm;margin:2mm 0}
+.pic.sm{width:40mm;height:40mm}
+.riddle{font-size:19pt;font-weight:900;line-height:1.6;border:3px solid #2d2630;border-radius:8mm;padding:5mm 7mm;margin:3mm 0;background:#fffaf0}
+.letters{margin-top:auto;display:flex;gap:4mm;justify-content:center}.letter{width:28mm;height:28mm}
+.q{width:34mm;height:34mm;margin:1mm 0}
+.letter text{font-weight:900}
+.deco{position:absolute;inset:0;pointer-events:none}
+.guide{padding:14mm;font-size:11pt}
+.guide h2{font-size:17pt;margin:0 0 3mm}
+.guide table{border-collapse:collapse;width:100%;margin:3mm 0}
+.guide td,.guide th{border:1.5px solid #888;padding:2.4mm 3mm;text-align:left}
+.guide th{background:#f4efe8}
+.guide ol{margin:2mm 0;padding-left:6mm}
+.final .ttl{font-size:30pt}
+.pw{display:flex;gap:2mm;justify-content:center;margin:3mm 0}
+.pw span{width:15mm;height:17mm;border:2.5px solid #2d2630;border-radius:3mm;display:flex;align-items:flex-end;justify-content:center;font-size:8pt;color:#999;padding-bottom:1mm}
+@page{size:A4;margin:0}
+@media print{body{background:#fff}.wrap>*:not(.preview){display:none}.wrap{padding:0;max-width:none}.preview{margin:0;gap:0;display:block}.sheet{box-shadow:none;page-break-after:always;break-after:page;transform:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>おうち宝さがしメーカー</h1>
+<p class="sub">名前とかくし場所をえらぶと、宝さがしのカードができます。A4で印刷して、まん中で切って使います。</p>
+<div class="panel" id="form">
+  <div class="row">
+    <div><label for="nm">よびかた（ひらがな。例：はなこちゃん）</label><input id="nm" value="はなこちゃん" maxlength="10"></div>
+    <div><label for="th">テーマ</label><select id="th"><option value="christmas">クリスマス（サンタさんから）</option><option value="birthday">おたんじょうび</option></select></div>
+    <div><label for="lv">むずかしさ</label><select id="lv"><option value="easy">え（3〜5さい）</option><option value="normal" selected>なぞなぞ（5〜7さい）</option><option value="hard">なぞなぞ＋あいことば（7さい〜）</option></select></div>
+  </div>
+  <div><label for="pw">あいことば（むずかしい のときだけ。かくした数だけ文字をくばります）</label><input id="pw" value="" maxlength="8" placeholder="空なら自動（例：めりーくりすます）"></div>
+  <div><label>かくし場所（押した順にまわります。3〜8か所）</label><div class="places" id="pl"></div>
+  <p class="hint">さいごの場所に、プレゼントと「おめでとう」カードをおきます。</p></div>
+  <button class="go" id="print">印刷する（PDFに保存もできます）</button>
+</div>
+<div class="preview" id="pv"></div>
+</div>
+<script>
+// かくし場所。絵は自作の単純な図形
+const S='stroke="#2d2630" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"';
+const PLACES={
+ reizouko:{n:'れいぞうこ',r:'つめたい はこ。なかで たべものが ねむっているよ',svg:`<rect x="28" y="8" width="44" height="84" rx="6" fill="#dff1ff" ${S}/><path d="M28 38H72" ${S}/><path d="M36 20v10M36 46v14" ${S} stroke-width="4"/>`},
+ genkan:{n:'げんかん',r:'みんなの くつが ならんでいる ところ',svg:`<rect x="26" y="8" width="48" height="80" rx="4" fill="#d9a066" ${S}/><circle cx="64" cy="50" r="4" fill="#ffd166" ${S}/><path d="M14 92H86" ${S}/><path d="M20 92c0-7 6-9 12-7l6 7z" fill="#e85a5a" ${S}/>`},
+ ofuro:{n:'おふろ',r:'あったかい おゆに つかる ところ',svg:`<path d="M10 48H90V62a22 22 0 0 1-22 22H32A22 22 0 0 1 10 62z" fill="#fff" ${S}/><path d="M14 52H86" stroke="#7fb8e8" stroke-width="6"/><path d="M34 40c-4-6 4-10 0-16M50 40c-4-6 4-10 0-16M66 40c-4-6 4-10 0-16" fill="none" ${S}/><path d="M28 84l-4 8M72 84l4 8" ${S}/>`},
+ bed:{n:'ベッド（おふとん）',r:'よる ねむるときに もぐりこむ ところ',svg:`<rect x="8" y="50" width="84" height="22" rx="4" fill="#9cc5ff" ${S}/><rect x="12" y="38" width="24" height="14" rx="6" fill="#fff" ${S}/><path d="M8 30V86M92 50V86" ${S}/><path d="M38 50c10-12 40-12 54 0" fill="#c9a7f4" ${S}/>`},
+ tv:{n:'テレビ',r:'スイッチを いれると、えや こえが でてくる はこ',svg:`<rect x="10" y="20" width="80" height="54" rx="6" fill="#3a3a4a" ${S}/><rect x="16" y="26" width="68" height="42" rx="3" fill="#8fd3c1"/><path d="M40 74l-6 14M60 74l6 14M28 88H72" ${S}/><circle cx="40" cy="44" r="6" fill="#ffd166"/>`},
+ hondana:{n:'ほんだな',r:'えほんが ずらりと ならんでいる ところ',svg:`<rect x="14" y="8" width="72" height="84" rx="3" fill="#d9a066" ${S}/><path d="M14 50H86" ${S}/><rect x="20" y="18" width="9" height="32" fill="#e85a5a" ${S}/><rect x="30" y="22" width="9" height="28" fill="#4fae6a" ${S}/><rect x="40" y="16" width="9" height="34" fill="#ffd166" ${S}/><rect x="22" y="60" width="9" height="32" fill="#9cc5ff" ${S}/><rect x="32" y="64" width="9" height="28" fill="#c9a7f4" ${S}/><rect x="60" y="62" width="20" height="30" fill="#ffb38a" ${S}/>`},
+ toilet:{n:'トイレ',r:'ひとりで はいって、さいごに みずを ながす ところ',svg:`<rect x="56" y="8" width="26" height="40" rx="4" fill="#fff" ${S}/><path d="M18 48H82c0 18-12 28-30 28H40c-14 0-22-12-22-28z" fill="#fff" ${S}/><path d="M38 76l-4 16H66l-4-16" fill="#fff" ${S}/>`},
+ sentakuki:{n:'せんたくき',r:'よごれた ふくが ぐるぐる まわる はこ',svg:`<rect x="16" y="10" width="68" height="82" rx="8" fill="#fff" ${S}/><path d="M16 26H84" ${S}/><circle cx="50" cy="58" r="22" fill="#9cc5ff" ${S}/><path d="M36 60c6-8 22 8 28-2" fill="none" ${S}/><circle cx="72" cy="18" r="3" fill="#e85a5a"/>`},
+ sofa:{n:'ソファ',r:'すわると ふかふか。みんなで くつろぐ ところ',svg:`<rect x="20" y="30" width="60" height="30" rx="8" fill="#ffb38a" ${S}/><rect x="8" y="46" width="84" height="26" rx="8" fill="#ff8a5c" ${S}/><path d="M18 72v10M82 72v10" ${S}/>`},
+ tsukue:{n:'つくえ',r:'おえかきや べんきょうを する だい',svg:`<path d="M8 40H92V48H8z" fill="#d9a066" ${S}/><path d="M16 48V90M84 48V90" ${S}/><rect x="56" y="54" width="22" height="16" fill="#d9a066" ${S}/><path d="M26 36l20-14 4 6-20 14z" fill="#ffd166" ${S}/>`},
+ curtain:{n:'カーテン',r:'まどの まえで ひらひら ゆれる ぬの',svg:`<path d="M8 12H92" ${S}/><path d="M12 12c-2 30 8 50 0 80H38c-6-30 4-50 0-80z" fill="#f4a7b9" ${S}/><path d="M88 12c2 30-8 50 0 80H62c6-30-4-50 0-80z" fill="#f4a7b9" ${S}/><rect x="40" y="18" width="20" height="60" fill="#dff1ff" ${S}/>`},
+ renji:{n:'でんしレンジ',r:'チンと なって、たべものを あたためて くれる はこ',svg:`<rect x="8" y="24" width="84" height="54" rx="6" fill="#fff" ${S}/><rect x="16" y="32" width="50" height="38" rx="3" fill="#ffd166" ${S}/><circle cx="80" cy="40" r="4" ${S} fill="#fff"/><circle cx="80" cy="56" r="4" ${S} fill="#fff"/>`},
+ omochabako:{n:'おもちゃばこ',r:'おもちゃが いっぱい つまった はこ',svg:`<rect x="12" y="44" width="76" height="46" rx="4" fill="#8fd3c1" ${S}/><circle cx="34" cy="38" r="12" fill="#e85a5a" ${S}/><rect x="52" y="22" width="20" height="22" fill="#ffd166" ${S}/><path d="M12 56H88" ${S}/>`},
+ kutsushita:{n:'たんす（ふくの ひきだし）',r:'ふくや くつしたが しまってある ひきだし',svg:`<rect x="18" y="10" width="64" height="80" rx="4" fill="#d9a066" ${S}/><path d="M18 36H82M18 62H82" ${S}/><path d="M44 23H56M44 49H56M44 75H56" ${S} stroke-width="4"/>`}
+};
+const TH={
+ christmas:{from:'サンタさん',ttl:'サンタさんからの ちょうせんじょう',open:n=>`${n}へ。<br>いい子に していたので、プレゼントを おうちの どこかに かくしたよ。<br>カードを じゅんばんに さがしてね。`,end:'メリークリスマス！',pw:'めりーくりすます',col:['#e85a5a','#4fae6a','#ffd166','#7fb8e8']},
+ birthday:{from:'',ttl:'おたんじょうびの ちょうせんじょう',open:n=>`${n}へ。<br>おたんじょうび おめでとう！<br>プレゼントは おうちの どこかに あるよ。<br>カードを じゅんばんに さがしてね。`,end:'おたんじょうび おめでとう！',pw:'おめでとう',col:['#f4a7b9','#9cc5ff','#ffd166','#8fd3c1']}
+};
+const tree=(x,y,r)=>`<g transform="translate(${x},${y})"><path d="M0 ${-r}L${r*.55} ${-r*.2}H${r*.3}L${r*.75} ${r*.6}H${-r*.75}L${-r*.3} ${-r*.2}H${-r*.55}Z" fill="#4fae6a" stroke="#2d2630" stroke-width="${r/10}" stroke-linejoin="round"/><rect x="${-r*.13}" y="${r*.6}" width="${r*.26}" height="${r*.3}" fill="#8a5a3a"/></g>`;
+const star=(x,y,r,f)=>{let p='';for(let i=0;i<10;i++){const a=Math.PI/5*i-Math.PI/2,rr=i%2?r*.45:r;p+=`${(x+rr*Math.cos(a)).toFixed(1)},${(y+rr*Math.sin(a)).toFixed(1)} `;}return `<polygon points="${p}" fill="${f}" stroke="#2d2630" stroke-width="${r/9}" stroke-linejoin="round"/>`;};
+const cake=(x,y,r)=>`<g transform="translate(${x},${y})"><rect x="${-r*.8}" y="${-r*.2}" width="${r*1.6}" height="${r*.8}" rx="${r*.1}" fill="#f4a7b9" stroke="#2d2630" stroke-width="${r/10}"/><path d="M${-r*.8} ${r*.1}q${r*.2} ${r*.2} ${r*.4} 0t${r*.4} 0t${r*.4} 0t${r*.4} 0" fill="none" stroke="#fff" stroke-width="${r/8}"/><rect x="${-r*.06}" y="${-r*.6}" width="${r*.12}" height="${r*.4}" fill="#9cc5ff"/><path d="M0 ${-r*.62}c${-r*.12} ${-r*.12} 0 ${-r*.28} 0 ${-r*.28}c0 0 ${r*.12} ${r*.16} 0 ${r*.28}" fill="#ffb703"/></g>`;
+const balloon=(x,y,r,f)=>`<g transform="translate(${x},${y})"><ellipse rx="${r*.6}" ry="${r*.75}" fill="${f}" stroke="#2d2630" stroke-width="${r/10}"/><path d="M0 ${r*.75}q${r*.2} ${r*.5} 0 ${r}" fill="none" stroke="#2d2630" stroke-width="${r/14}"/></g>`;
+const deco=(th,seed,top)=>{const c=TH[th].col;let s='';const R=i=>{const x=Math.sin(seed*13.1+i*91.7)*10000;return x-Math.floor(x)};
+ for(let i=0;i<10;i++){const x=10+R(i)*190,y=(top?8:10)+R(i+20)*130;if(x>40&&x<170&&y>20&&y<128)continue;s+=`<circle cx="${x}" cy="${y}" r="${1.5+R(i+5)*2.5}" fill="${c[i%4]}" opacity=".6"/>`;}
+ if(th==='christmas')s+=tree(194,136,9)+star(16,128,5,'#ffd166')+star(195,20,4,'#ffd166');else s+=balloon(194,128,8,'#9cc5ff')+cake(17,132,8)+balloon(196,22,6,'#f4a7b9');
+ return `<svg class="deco" viewBox="0 0 210 148.5">${s}</svg>`;};
+const pic=(k,cls='')=>`<svg class="pic ${cls}" viewBox="0 0 100 100">${PLACES[k].svg}</svg>`;
+const letterBadge=(ch,i,col)=>`<svg class="letter" viewBox="0 0 100 100">${star(50,52,46,col)}<text x="50" y="66" font-size="38" text-anchor="middle" fill="#2d2630">${ch}</text><text x="50" y="96" font-size="13" text-anchor="middle" fill="#2d2630">${i}ばんめ</text></svg>`;
+function render(o){
+ const t=TH[o.th],N=o.places.length,name=o.name||'はなこちゃん';
+ // あいことばの文字をカードにくばる（文字数がかくし場所より多いときは1枚に2文字以上）
+ const pw=[...(o.pw||t.pw)].slice(0,16);const per=Array.from({length:N},()=>[]);pw.forEach((c,i)=>per[Math.floor(i*N/pw.length)].push([c,i+1]));
+ const cards=[];
+ // 1枚目：てがみ（手わたし）→ 1つめの場所へ
+ const clue=(k,i)=>o.lv==='easy'?`<div class="msg">つぎの カードは ここ！</div>${pic(k)}<div class="ttl">${PLACES[k].n}</div>`:`<svg class="q" viewBox="0 0 100 100"><rect x="14" y="38" width="72" height="54" rx="4" fill="#ffd166" stroke="#2d2630" stroke-width="4"/><rect x="8" y="26" width="84" height="16" rx="3" fill="#e85a5a" stroke="#2d2630" stroke-width="4"/><text x="50" y="82" font-size="40" font-weight="900" text-anchor="middle" fill="#2d2630">？</text></svg><div class="msg">${i}つめの なぞなぞ</div><div class="riddle">${PLACES[k].r}</div><div class="msg" style="font-size:12pt">わかったら、そこへ いってみよう</div>`;
+ cards.push(`<div class="ttl" style="margin-top:8mm">${t.ttl}</div><div class="msg">${t.open(name)}</div>${o.lv==='easy'?pic(o.places[0],'sm')+`<div class="msg">さいしょは <b>${PLACES[o.places[0]].n}</b> だよ</div>`:`<div class="riddle">${PLACES[o.places[0]].r}</div>`}${t.from?`<div class="msg" style="font-size:12pt">${t.from}より</div>`:''}`);
+ for(let i=1;i<N;i++){cards.push(`<div class="ttl" style="margin-top:6mm">みつけたね！ すごい！</div>${clue(o.places[i],i+1)}${o.lv==='hard'?`<div class="letters">${per[i-1].map(([c,j],m)=>letterBadge(c,j,t.col[(i+m)%4])).join('')}</div>`:''}`);}
+ cards.push(`<div class="ttl" style="margin-top:10mm">${t.end}</div><div class="msg">${name}、さいごまで よく がんばったね。<br>プレゼントは ${name}の ものだよ。</div>${o.th==='christmas'?`<svg class="pic${o.lv==='hard'?' sm':''}" viewBox="0 0 100 100">${tree(50,52,40)}${star(50,12,10,'#ffd166')}</svg>`:`<svg class="pic${o.lv==='hard'?' sm':''}" viewBox="0 0 100 100">${cake(50,58,40)}</svg>`}${o.lv==='hard'?`${per[N-1].length?`<div class="msg" style="font-size:12pt">さいごの もじ</div><div class="letters" style="margin-top:0">${per[N-1].map(([c,j],m)=>letterBadge(c,j,t.col[m%4])).join('')}</div>`:''}<div class="msg" style="font-size:13pt">あつめた もじを ばんごうじゅんに ならべて、おうちの ひとに いってね</div><div class="pw">${pw.map((_,i)=>`<span>${i+1}</span>`).join('')}</div>`:''}`);
+ // カード番号の丸
+ const html=cards.map((c,i)=>`<div class="no" style="background:${t.col[i%4]}">${i+1}</div>${c}`);
+ let pages='';
+ // おうちの人むけ：かくし方
+ pages+=`<section class="sheet"><div class="guide"><h2>おうちの人へ：かくし方</h2><p>カードは全部で${N+1}枚。点線で切って、下の表のとおりに かくしてください。1番は子どもに手わたします。</p><table><tr><th>カード</th><th>かくす場所</th><th>チェック</th></tr><tr><td>1番（てがみ）</td><td>子どもに手わたす</td><td>□</td></tr>${o.places.map((k,i)=>`<tr><td>${i+2}番${i===N-1?'（おめでとう）':''}</td><td>${PLACES[k].n}${i===N-1?' ＋ プレゼント':''}</td><td>□</td></tr>`).join('')}</table>
+ <ol><li>かくし場所は、子どもの手がとどく高さに。カードの はしが少し見えるくらいがちょうどいいです。</li><li>字が読めない子には、カードを読んであげてください。「え」のむずかしさなら、絵だけでも進めます。</li>${o.lv==='hard'?`<li>あいことばは「<b>${pw.join('')}</b>」。カードの星の文字を集めると、この言葉になります。</li>`:''}<li>火や水のそば、高いところには かくさないでください。</li></ol>
+ <p style="color:#888;font-size:9pt">おうち宝さがしメーカー（HMSUの道具箱）でAIが作りました。家庭で使うために何枚でも印刷できます。</p></div></section>`;
+ for(let i=0;i<html.length;i+=2){pages+=`<section class="sheet"><div class="half top">${deco(o.th,i,1)}${html[i]}</div>${html[i+1]?`<div class="half bot">${deco(o.th,i+1,0)}${html[i+1]}</div><span class="cut">✂ きりとり</span>`:''}</section>`;}
+ return pages;
+}
+if(typeof module!=='undefined')module.exports={render,PLACES};
+if(typeof document!=='undefined'){
+ const q=new URLSearchParams(location.search);
+ let sel=(q.get('places')||'reizouko,sofa,ofuro,genkan,bed').split(',').filter(k=>PLACES[k]);
+ const $=id=>document.getElementById(id);
+ if(q.get('name'))$('nm').value=q.get('name');if(q.get('theme'))$('th').value=q.get('theme');if(q.get('level'))$('lv').value=q.get('level');if(q.get('pw'))$('pw').value=q.get('pw');
+ const draw=()=>{$('pl').innerHTML=Object.keys(PLACES).map(k=>{const i=sel.indexOf(k);return `<button type="button" data-k="${k}" class="${i>=0?'on':''}" aria-pressed="${i>=0}"><b>${i>=0?i+1:'＋'}</b> ${PLACES[k].n}</button>`}).join('');
+  $('pv').innerHTML=sel.length>=3?render({name:$('nm').value.trim(),th:$('th').value,lv:$('lv').value,pw:$('pw').value.trim(),places:sel}):'<p class="hint">かくし場所を3か所以上えらんでください。</p>';fit();};
+ const fit=()=>{const w=$('pv').clientWidth;document.querySelectorAll('.sheet').forEach(s=>{const sc=Math.min(1,w/s.offsetWidth);s.style.transform=sc<1?`scale(${sc})`:'';s.style.marginBottom=sc<1?`${-(1-sc)*s.offsetHeight}px`:''});};
+ $('pl').onclick=e=>{const b=e.target.closest('button');if(!b)return;const k=b.dataset.k,i=sel.indexOf(k);if(i>=0)sel.splice(i,1);else if(sel.length<8)sel.push(k);draw();};
+ ['nm','th','lv','pw'].forEach(id=>$(id).addEventListener('input',draw));
+ $('print').onclick=()=>window.print();window.addEventListener('resize',fit);
+ if(q.get('print'))$('form').hidden=true;
+ draw();
+}
+</script>
+</body>
+</html>
