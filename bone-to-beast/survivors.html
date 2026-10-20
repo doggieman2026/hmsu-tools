@@ -235,7 +235,7 @@ function formCard(id,i,lbl){var col=fCol(id);return card(col,function(g){drawFor
 function drawFormFit(g,id,maxH,maxW){if(FORMS[id].ult){var A=ULTART[id],a=ATLAS[A[0]],f=Math.min(maxH*1.4/A[1],maxW/(a[2]/a[3]*A[1]));g.scale(f,f);drawUlt(g,{x:0,y:0,face:1,walk:0.5,swing:0,ground:true},id,true);return;}
   var F=FORMS[id],b=ATLAS[F.art],sc=Math.min(maxH*1.25/F.h,maxW/(b[2]/b[3]*F.h),1.3);g.scale(sc,sc);drawForm(g,{x:0,y:0,face:1,walk:0.5,swing:0,ground:true},id);}
 function offer(){var el=$('cards');el.innerHTML='';G.state='graft';
-  if(G.fin){$('graftT').textContent=LANG==='ja'?'転生の時…':'Time to be reborn…';$('graftP').textContent=LANG==='ja'?'別のモンスターに生まれ変わる。今の強さの7割と最後の技を引き継ぎ、さらに攻撃+25%・HP+20%':'Be reborn as another monster. Keep 70% of your power and your last skill, plus +25% attack, +20% HP.';
+  if(G.fin){$('graftT').textContent=LANG==='ja'?'転生の時…':'Time to be reborn…';$('graftP').textContent=LANG==='ja'?'別のモンスターに生まれ変わる。今の強さの7割・必殺技・最後の技（威力2倍）を引き継ぎ、さらに攻撃+25%・HP+20%':'Be reborn as another monster. Keep 70% of your power, your ultimate and your last skill (x2 power), plus +25% attack, +20% HP.';
     var opts=Object.keys(STARTERS).filter(function(k){return k!==G.starter;}).sort(function(){return Math.random()-0.5;}).slice(0,3);
     opts.forEach(function(k,i){var b=card('#ffd34f',function(g){var z=START_ART[k]?Math.min(2,52/START_ART[k][1]):k==='beast'?1.15:1;g.scale(z,z);drawBody(g,{x:0,y:0,face:1,walk:0.6,swing:0,ground:true,h:62},{},k,null);},'<em>'+(LANG==='ja'?'転生':'Rebirth')+'</em><b>'+STARTERS[k].name+'</b><span>'+STARTERS[k].desc+'</span><em>['+(i+1)+']</em>');b.addEventListener('click',function(){rebirth(k);});el.appendChild(b);});
     var n0=document.createElement('button');n0.type='button';n0.className='card';n0.style.minHeight='auto';n0.innerHTML='<b>'+L('Not yet')+'</b><span>'+(LANG==='ja'?'今の姿で戦う':'Stay as you are')+'</span><em>['+(opts.length+1)+']</em>';
@@ -252,7 +252,7 @@ function evolve(id,el){var p=G.p;G.form=id;G.el=el;G.stage=fStage(id);G.ult=FORM
   p.max=maxHp();p.hp=p.max;dex[id]=1;store.set('dex',dex);var col=fCol(id);snd(G.fin?'awaken':'graft');G.shake=G.fin?24:10;
   for(var i=0;i<(G.fin?4:2);i++)setTimeout(function(){burst(p.x,p.y-40,col,40);},i*120);G.fx.push({ring:1,x:p.x,y:p.y-30,r:0,R:G.fin?420:220,l:0.8,L:0.8,c:col});
   setBanner(LANG==='ja'?fName(id)+'に進化！':fName(id).toUpperCase()+'!');$('graft').hidden=true;G.state='play';last=performance.now();}
-function rebirth(k){G.fin=false;G.ug=0;G.ult2=0;var p=G.p,prevS=G.skills.slice();G.carryHp=Math.round(p.max*0.7);G.carryDmg=stat().dmg*0.7;G.reb++;G.starter=k;G.form=null;G.ult=null;G.stage=1;G.el=null;G.blood={};G.need=10;G.skills=[starterSkill(k)];var inh=prevS[prevS.length-1];if(inh&&G.skills.indexOf(inh)<0)G.skills.push(inh);p.cds=[0,0,0,0];refreshSkillBtns();
+function rebirth(k){G.legacy=ultKind();G.fin=false;G.ug=60;G.ult2=0;var p=G.p,prevS=G.skills.slice();G.carryHp=Math.round(p.max*0.7);G.carryDmg=stat().dmg*0.7;G.reb++;G.starter=k;G.form=null;G.ult=null;G.stage=1;G.el=null;G.blood={};G.need=10;G.skills=[starterSkill(k)];var inh=prevS[prevS.length-1];if(inh&&G.skills.indexOf(inh)<0)G.skills.push(inh);G.boost={};if(inh)G.boost[inh]=2;p.cds=[0,0,0,0];refreshSkillBtns();
   p.max=maxHp();p.hp=p.max;snd('awaken');G.shake=20;burst(p.x,p.y-30,'#ffd34f',60);G.fx.push({ring:1,x:p.x,y:p.y-30,r:0,R:380,l:0.8,L:0.8,c:'#ffd34f'});
   setBanner(LANG==='ja'?'転生！'+STARTERS[k].name+'（'+G.reb+'回目）':'REBORN as '+STARTERS[k].name+' (x'+G.reb+')');$('graft').hidden=true;G.state='play';last=performance.now();}
 function burst(x,y,c,n){for(var i=0;i<n;i++)G.fx.push({x:x,y:y,vx:(Math.random()-0.5)*500,vy:(Math.random()-0.5)*500,l:0.8,c:c,s:4+Math.random()*4});}
@@ -403,7 +403,7 @@ function spawnEnemy(sp,boss){var E=ENEMY[sp],a=Math.random()*6.283,R=Math.hypot(
     spd:EKIND[sp].spd*(boss?0.8:1)*(0.9+Math.random()*0.2),boss:!!boss,t:Math.random()*3,cd:1.5+Math.random()*2,hit:0,stun:0,burn:0,face:1,ground:true,aim:0});}
 function pool(){var w=G.wave,p=['slime','bat'];if(w>=1)p.push('goblin');if(w>=2)p.push('wolf','plant');if(w>=3)p.push('golem');if(w>=4)p.push('drake');return p;}
 function hurtEnemy(e,dmg,kx,ky,quiet){if(e.dead)return;e.hp-=dmg;e.hit=0.1;if(!e.boss){e.vx+=kx||0;e.vy+=ky||0;}
-  if(!quiet&&G.fin&&!G.ult2)G.ug=Math.min(100,(G.ug||0)+2);if(!quiet){G.texts.push({x:e.x,y:e.y-e.h-4,t:Math.round(dmg)+'',l:0.6,c:'#fff'});snd('hit');}var s=stat();if(s.life&&!quiet)G.p.hp=Math.min(G.p.max,G.p.hp+dmg*s.life);if(e.hp<=0)kill(e);}
+  if(!quiet&&(G.fin||G.legacy)&&!G.ult2)G.ug=Math.min(100,(G.ug||0)+2);if(!quiet){G.texts.push({x:e.x,y:e.y-e.h-4,t:Math.round(dmg)+'',l:0.6,c:'#fff'});snd('hit');}var s=stat();if(s.life&&!quiet)G.p.hp=Math.min(G.p.max,G.p.hp+dmg*s.life);if(e.hp<=0)kill(e);}
 function kill(e){e.dead=true;G.kills++;G.score+=Math.round(ENEMY[e.sp].pts*(e.boss?10:1)*(1+G.wave*0.1));snd('kill');G.shake=Math.max(G.shake,e.boss?14:3);
   for(var i=0;i<12;i++)G.fx.push({x:e.x,y:e.y-e.h/2,vx:(Math.random()-0.5)*360,vy:(Math.random()-0.5)*360,l:0.5,c:i%2?COL[e.sp]:'#d6334a',s:2+Math.random()*3});
   var n=e.boss?15:1;for(var k=0;k<n;k++)G.orbs.push({el:ELOF[e.sp],x:e.x+(Math.random()-0.5)*(e.boss?60:6),y:e.y+(Math.random()-0.5)*(e.boss?60:6),t:0,mag:false});}
@@ -423,7 +423,7 @@ function attack(){var p=G.p,s=stat();if(p.atkT>0)return;var rng=s.ranged||s.kind
 var SKCD={'Bone Toss':4,'Firebomb':4,'Regrow':9,'Pounce':3.5,'Screech':6,'Fire Breath':5,'Bloom':8,'Ground Slam':5,'Inferno':6,'Bat Swarm':6,'Golden Roll':4,'Sacred Bloom':9,'Roar':8};
 var ULTK={dragon:'breath',drEmerald:'breath',drShadow:'breath',vampire:'moon',btLord:'moon',orichalcum:'press',glOri:'press',gbKing:'press',tree:'tree',plWarden:'tree',glTree:'tree',skWraith:'tree',gbDruid:'tree',bsSacred:'tree',btMonarch:'tree',plTreant:'quake',chimera:'quake',btFiend:'quake',skSteel:'quake',drEarth:'quake',slDeath:'abyss',gbDemon:'abyss',glRune:'abyss',plBloom:'abyss'};
 var ULTN={breath:['Dragon Storm','ドラゴンストーム'],moon:['Blood Moon','ブラッドムーン'],press:['Golden Crush','黄金の大圧殺'],tree:['World Tree Wrath','世界樹の怒り'],quake:['Earth Splitter','大地割り'],abyss:['Abyss Gate','深淵の門']};
-function ultKind(){return ULTK[G.form]||({grass:'tree',rock:'quake',dark:'abyss'})[G.el]||'quake';}
+function ultKind(){if(!G.fin&&G.legacy)return G.legacy;return ULTK[G.form]||({grass:'tree',rock:'quake',dark:'abyss'})[G.el]||'quake';}
 function ultName(){var n=ULTN[ultKind()];return LANG==='ja'?n[1]:n[0];}
 function ultimate(){var p=G.p,s=stat(),k=ultKind(),t=nearest(500);G.ug=0;G.ultK=k;G.ult2=k==='breath'?1.6:k==='abyss'?1.8:k==='moon'?1.4:0.6;p.inv=G.ult2+0.3;snd('awaken');G.shake=20;G.flashU=1;setBanner(ultName()+'！');
   G.ultX=t?t.x:p.x+p.face*150;G.ultY=t?t.y:p.y;
@@ -437,8 +437,8 @@ function ultTick(dt){var p=G.p,s=stat(),k=G.ultK;G.ult2-=dt;
   if(k==='abyss'){var cx=G.ultX,cy=G.ultY;G.en.forEach(function(e){var dx=cx-e.x,dy=cy-e.y,d=Math.hypot(dx,dy)||1;if(d<380){e.x+=dx/d*240*dt;e.y+=dy/d*240*dt;if(Math.random()<dt*6)hurtEnemy(e,s.dmg*0.5,0,0,true);}});
     if(G.ult2<=0){G.shake=24;G.fx.push({ring:1,x:cx,y:cy,r:0,R:300,l:0.6,L:0.6,c:'#a46bff'});burst(cx,cy,'#a46bff',60);G.en.forEach(function(e){if(Math.hypot(cx-e.x,cy-e.y)<280)hurtEnemy(e,s.dmg*6,0,0);});}}
   if(G.ult2<0)G.ult2=0;}
-function castSkills(){if(G.fin){if(G.ug<100)G.ug=Math.min(100,G.ug+(G._dt||1/60)*1.5);if(G.ug>=100&&!G.ult2&&nearest(400))ultimate();}if(G.ult2>0)ultTick(G._dt||1/60);var p=G.p;G.skills.forEach(function(n,i){if(p.cds[i]>0)return;if(useSkill(n))p.cds[i]=SKCD[n]||5;});}
-function useSkill(n){var p=G.p,s=stat(),t=nearest(340);
+function castSkills(){if(G.fin||G.legacy){if(G.ug<100)G.ug=Math.min(100,G.ug+(G._dt||1/60)*1.5);if(G.ug>=100&&!G.ult2&&nearest(400))ultimate();}if(G.ult2>0)ultTick(G._dt||1/60);var p=G.p;G.skills.forEach(function(n,i){if(p.cds[i]>0)return;if(useSkill(n))p.cds[i]=SKCD[n]||5;});}
+function useSkill(n){var p=G.p,s=stat(),t=nearest(340),bst=(G.boost&&G.boost[n])||1;if(bst>1){s=Object.assign({},s);s.dmg*=bst;}
   if(n==='Regrow'){if(p.hp>p.max*0.75)return false;p.hp=Math.min(p.max,p.hp+p.max*0.35);G.fx.push({ring:1,x:p.x,y:p.y,r:0,R:90,l:0.5,L:0.5,c:'#4fcf86'});G.texts.push({x:p.x,y:p.y-60,t:'+HP',l:0.8,c:'#4fcf86'});snd('skill');return true;}
   if(!t)return false;var ang=Math.atan2(t.y-p.y,t.x-p.x);snd('skill');
   if(n==='Bone Toss'){for(var b=0;b<8;b++){var a=b/8*6.283;G.shots.push({x:p.x,y:p.y,vx:Math.cos(a)*380,vy:Math.sin(a)*380,dmg:s.dmg,l:0.9,r:8,kind:'bone',hitL:[],pierce:1});}}
@@ -552,8 +552,8 @@ function hud(){var p=G.p,k=Math.max(0.6,Math.min(1,W/520)),x=10,y=10;ctx.save();
   ctx.fillStyle='rgba(255,255,255,.12)';rr(ctx,bx,y+28,bw,12,6);ctx.fill();ctx.fillStyle='#e8445a';rr(ctx,bx,y+28,bw*Math.max(0,p.hp/p.max),12,6);ctx.fill();ctx.fillStyle='#fff';ctx.textAlign='left';ctx.font='800 10px Trebuchet MS,sans-serif';ctx.fillText(Math.ceil(p.hp)+' / '+p.max,bx+6,y+38);
   var tot=0;for(var kk in G.blood)tot+=G.blood[kk];ctx.fillStyle='rgba(255,255,255,.12)';rr(ctx,bx,y+45,bw,8,4);ctx.fill();var off=0;Object.keys(G.blood).forEach(function(s){var w2=bw*Math.min(1,G.blood[s]/G.need);ctx.fillStyle=EL[s].col;ctx.fillRect(bx+off,y+45,Math.max(0,Math.min(w2,bw-off)),8);off+=w2;});
   ctx.font='800 10px Trebuchet MS,sans-serif';ctx.fillStyle='#c9bdd4';ctx.fillText((G.fin?(LANG==='ja'?'転生まで ':'REBIRTH '):L('BLOOD')+' ')+tot+'/'+G.need+(G.reb?(LANG==='ja'?'  転生'+G.reb:'  x'+G.reb):''),bx,y+66);
-  if(G.fin){ctx.fillStyle='rgba(255,255,255,.12)';rr(ctx,bx,y+56,bw,4,2);ctx.fill();ctx.fillStyle=G.ug>=100?'#ffd34f':'#b8923a';rr(ctx,bx,y+56,bw*G.ug/100,4,2);ctx.fill();}
-  ctx.textAlign='right';G.skills.forEach(function(n,i){var c=p.cds[i];ctx.fillStyle=c<=0?'#ffd34f':'#8d8399';ctx.fillText(L(n),x+Wk-28-(G.skills.length-1-i)*72,y+66);});
+  if(G.fin||G.legacy){ctx.fillStyle='rgba(255,255,255,.12)';rr(ctx,bx,y+56,bw,4,2);ctx.fill();ctx.fillStyle=G.ug>=100?'#ffd34f':'#b8923a';rr(ctx,bx,y+56,bw*G.ug/100,4,2);ctx.fill();}
+  ctx.textAlign='right';G.skills.forEach(function(n,i){var c=p.cds[i];ctx.fillStyle=c<=0?'#ffd34f':'#8d8399';ctx.fillText((G.boost&&G.boost[n]?'★':'')+L(n),x+Wk-28-(G.skills.length-1-i)*72,y+66);});
   ctx.restore();
   if(G.bannerT>0){ctx.globalAlpha=Math.min(1,G.bannerT*1.5);ctx.textAlign='center';ctx.font='900 '+Math.round(Math.min(W,H)*0.07)+'px Trebuchet MS,sans-serif';ctx.fillStyle='#f4efe6';ctx.shadowColor=G.form?fCol(G.form):'#d6334a';ctx.shadowBlur=20;ctx.fillText(G.banner,W/2,H*0.28);ctx.shadowBlur=0;ctx.globalAlpha=1;}}
 // ----- flow -----

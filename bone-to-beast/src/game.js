@@ -15,7 +15,7 @@ function spawnEnemy(sp,boss){var E=ENEMY[sp],a=Math.random()*6.283,R=Math.hypot(
     spd:EKIND[sp].spd*(boss?0.8:1)*(0.9+Math.random()*0.2),boss:!!boss,t:Math.random()*3,cd:1.5+Math.random()*2,hit:0,stun:0,burn:0,face:1,ground:true,aim:0});}
 function pool(){var w=G.wave,p=['slime','bat'];if(w>=1)p.push('goblin');if(w>=2)p.push('wolf','plant');if(w>=3)p.push('golem');if(w>=4)p.push('drake');return p;}
 function hurtEnemy(e,dmg,kx,ky,quiet){if(e.dead)return;e.hp-=dmg;e.hit=0.1;if(!e.boss){e.vx+=kx||0;e.vy+=ky||0;}
-  if(!quiet&&G.fin&&!G.ult2)G.ug=Math.min(100,(G.ug||0)+2);if(!quiet){G.texts.push({x:e.x,y:e.y-e.h-4,t:Math.round(dmg)+'',l:0.6,c:'#fff'});snd('hit');}var s=stat();if(s.life&&!quiet)G.p.hp=Math.min(G.p.max,G.p.hp+dmg*s.life);if(e.hp<=0)kill(e);}
+  if(!quiet&&(G.fin||G.legacy)&&!G.ult2)G.ug=Math.min(100,(G.ug||0)+2);if(!quiet){G.texts.push({x:e.x,y:e.y-e.h-4,t:Math.round(dmg)+'',l:0.6,c:'#fff'});snd('hit');}var s=stat();if(s.life&&!quiet)G.p.hp=Math.min(G.p.max,G.p.hp+dmg*s.life);if(e.hp<=0)kill(e);}
 function kill(e){e.dead=true;G.kills++;G.score+=Math.round(ENEMY[e.sp].pts*(e.boss?10:1)*(1+G.wave*0.1));snd('kill');G.shake=Math.max(G.shake,e.boss?14:3);
   for(var i=0;i<12;i++)G.fx.push({x:e.x,y:e.y-e.h/2,vx:(Math.random()-0.5)*360,vy:(Math.random()-0.5)*360,l:0.5,c:i%2?COL[e.sp]:'#d6334a',s:2+Math.random()*3});
   var n=e.boss?15:1;for(var k=0;k<n;k++)G.orbs.push({el:ELOF[e.sp],x:e.x+(Math.random()-0.5)*(e.boss?60:6),y:e.y+(Math.random()-0.5)*(e.boss?60:6),t:0,mag:false});}
@@ -35,7 +35,7 @@ function attack(){var p=G.p,s=stat();if(p.atkT>0)return;var rng=s.ranged||s.kind
 var SKCD={'Bone Toss':4,'Firebomb':4,'Regrow':9,'Pounce':3.5,'Screech':6,'Fire Breath':5,'Bloom':8,'Ground Slam':5,'Inferno':6,'Bat Swarm':6,'Golden Roll':4,'Sacred Bloom':9,'Roar':8};
 var ULTK={dragon:'breath',drEmerald:'breath',drShadow:'breath',vampire:'moon',btLord:'moon',orichalcum:'press',glOri:'press',gbKing:'press',tree:'tree',plWarden:'tree',glTree:'tree',skWraith:'tree',gbDruid:'tree',bsSacred:'tree',btMonarch:'tree',plTreant:'quake',chimera:'quake',btFiend:'quake',skSteel:'quake',drEarth:'quake',slDeath:'abyss',gbDemon:'abyss',glRune:'abyss',plBloom:'abyss'};
 var ULTN={breath:['Dragon Storm','ドラゴンストーム'],moon:['Blood Moon','ブラッドムーン'],press:['Golden Crush','黄金の大圧殺'],tree:['World Tree Wrath','世界樹の怒り'],quake:['Earth Splitter','大地割り'],abyss:['Abyss Gate','深淵の門']};
-function ultKind(){return ULTK[G.form]||({grass:'tree',rock:'quake',dark:'abyss'})[G.el]||'quake';}
+function ultKind(){if(!G.fin&&G.legacy)return G.legacy;return ULTK[G.form]||({grass:'tree',rock:'quake',dark:'abyss'})[G.el]||'quake';}
 function ultName(){var n=ULTN[ultKind()];return LANG==='ja'?n[1]:n[0];}
 function ultimate(){var p=G.p,s=stat(),k=ultKind(),t=nearest(500);G.ug=0;G.ultK=k;G.ult2=k==='breath'?1.6:k==='abyss'?1.8:k==='moon'?1.4:0.6;p.inv=G.ult2+0.3;snd('awaken');G.shake=20;G.flashU=1;setBanner(ultName()+'！');
   G.ultX=t?t.x:p.x+p.face*150;G.ultY=t?t.y:p.y;
@@ -49,8 +49,8 @@ function ultTick(dt){var p=G.p,s=stat(),k=G.ultK;G.ult2-=dt;
   if(k==='abyss'){var cx=G.ultX,cy=G.ultY;G.en.forEach(function(e){var dx=cx-e.x,dy=cy-e.y,d=Math.hypot(dx,dy)||1;if(d<380){e.x+=dx/d*240*dt;e.y+=dy/d*240*dt;if(Math.random()<dt*6)hurtEnemy(e,s.dmg*0.5,0,0,true);}});
     if(G.ult2<=0){G.shake=24;G.fx.push({ring:1,x:cx,y:cy,r:0,R:300,l:0.6,L:0.6,c:'#a46bff'});burst(cx,cy,'#a46bff',60);G.en.forEach(function(e){if(Math.hypot(cx-e.x,cy-e.y)<280)hurtEnemy(e,s.dmg*6,0,0);});}}
   if(G.ult2<0)G.ult2=0;}
-function castSkills(){if(G.fin){if(G.ug<100)G.ug=Math.min(100,G.ug+(G._dt||1/60)*1.5);if(G.ug>=100&&!G.ult2&&nearest(400))ultimate();}if(G.ult2>0)ultTick(G._dt||1/60);var p=G.p;G.skills.forEach(function(n,i){if(p.cds[i]>0)return;if(useSkill(n))p.cds[i]=SKCD[n]||5;});}
-function useSkill(n){var p=G.p,s=stat(),t=nearest(340);
+function castSkills(){if(G.fin||G.legacy){if(G.ug<100)G.ug=Math.min(100,G.ug+(G._dt||1/60)*1.5);if(G.ug>=100&&!G.ult2&&nearest(400))ultimate();}if(G.ult2>0)ultTick(G._dt||1/60);var p=G.p;G.skills.forEach(function(n,i){if(p.cds[i]>0)return;if(useSkill(n))p.cds[i]=SKCD[n]||5;});}
+function useSkill(n){var p=G.p,s=stat(),t=nearest(340),bst=(G.boost&&G.boost[n])||1;if(bst>1){s=Object.assign({},s);s.dmg*=bst;}
   if(n==='Regrow'){if(p.hp>p.max*0.75)return false;p.hp=Math.min(p.max,p.hp+p.max*0.35);G.fx.push({ring:1,x:p.x,y:p.y,r:0,R:90,l:0.5,L:0.5,c:'#4fcf86'});G.texts.push({x:p.x,y:p.y-60,t:'+HP',l:0.8,c:'#4fcf86'});snd('skill');return true;}
   if(!t)return false;var ang=Math.atan2(t.y-p.y,t.x-p.x);snd('skill');
   if(n==='Bone Toss'){for(var b=0;b<8;b++){var a=b/8*6.283;G.shots.push({x:p.x,y:p.y,vx:Math.cos(a)*380,vy:Math.sin(a)*380,dmg:s.dmg,l:0.9,r:8,kind:'bone',hitL:[],pierce:1});}}
@@ -164,8 +164,8 @@ function hud(){var p=G.p,k=Math.max(0.6,Math.min(1,W/520)),x=10,y=10;ctx.save();
   ctx.fillStyle='rgba(255,255,255,.12)';rr(ctx,bx,y+28,bw,12,6);ctx.fill();ctx.fillStyle='#e8445a';rr(ctx,bx,y+28,bw*Math.max(0,p.hp/p.max),12,6);ctx.fill();ctx.fillStyle='#fff';ctx.textAlign='left';ctx.font='800 10px Trebuchet MS,sans-serif';ctx.fillText(Math.ceil(p.hp)+' / '+p.max,bx+6,y+38);
   var tot=0;for(var kk in G.blood)tot+=G.blood[kk];ctx.fillStyle='rgba(255,255,255,.12)';rr(ctx,bx,y+45,bw,8,4);ctx.fill();var off=0;Object.keys(G.blood).forEach(function(s){var w2=bw*Math.min(1,G.blood[s]/G.need);ctx.fillStyle=EL[s].col;ctx.fillRect(bx+off,y+45,Math.max(0,Math.min(w2,bw-off)),8);off+=w2;});
   ctx.font='800 10px Trebuchet MS,sans-serif';ctx.fillStyle='#c9bdd4';ctx.fillText((G.fin?(LANG==='ja'?'転生まで ':'REBIRTH '):L('BLOOD')+' ')+tot+'/'+G.need+(G.reb?(LANG==='ja'?'  転生'+G.reb:'  x'+G.reb):''),bx,y+66);
-  if(G.fin){ctx.fillStyle='rgba(255,255,255,.12)';rr(ctx,bx,y+56,bw,4,2);ctx.fill();ctx.fillStyle=G.ug>=100?'#ffd34f':'#b8923a';rr(ctx,bx,y+56,bw*G.ug/100,4,2);ctx.fill();}
-  ctx.textAlign='right';G.skills.forEach(function(n,i){var c=p.cds[i];ctx.fillStyle=c<=0?'#ffd34f':'#8d8399';ctx.fillText(L(n),x+Wk-28-(G.skills.length-1-i)*72,y+66);});
+  if(G.fin||G.legacy){ctx.fillStyle='rgba(255,255,255,.12)';rr(ctx,bx,y+56,bw,4,2);ctx.fill();ctx.fillStyle=G.ug>=100?'#ffd34f':'#b8923a';rr(ctx,bx,y+56,bw*G.ug/100,4,2);ctx.fill();}
+  ctx.textAlign='right';G.skills.forEach(function(n,i){var c=p.cds[i];ctx.fillStyle=c<=0?'#ffd34f':'#8d8399';ctx.fillText((G.boost&&G.boost[n]?'★':'')+L(n),x+Wk-28-(G.skills.length-1-i)*72,y+66);});
   ctx.restore();
   if(G.bannerT>0){ctx.globalAlpha=Math.min(1,G.bannerT*1.5);ctx.textAlign='center';ctx.font='900 '+Math.round(Math.min(W,H)*0.07)+'px Trebuchet MS,sans-serif';ctx.fillStyle='#f4efe6';ctx.shadowColor=G.form?fCol(G.form):'#d6334a';ctx.shadowBlur=20;ctx.fillText(G.banner,W/2,H*0.28);ctx.shadowBlur=0;ctx.globalAlpha=1;}}
 // ----- flow -----
