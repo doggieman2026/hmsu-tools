@@ -32,6 +32,15 @@ RIGP.update({'rE_head':('gp_00',None),'rE_torso':('gp_01',None),'rE_upper':('gp_
 'rG_head':('gp_13',None),'rG_torso':('gp_14',None),'rG_upper':('gp_15','tb'),'rG_fore':('gp_16','gh'),'rG_thigh':('gp_17','tb'),'rG_shin':('gp_18','tb'),
 'rH_head':('gp_22',None),'rH_torso':('gp_23',None),'rH_upper':('gp_24','tb'),'rH_fore':('gp_25','gh'),'rH_thigh':('gp_26','tb'),'rH_shin':('gp_27','tb')})
 for k,(f,m) in RIGP.items(): M[k]=f
+
+RIGP.update({'rL_head':('ep_00',None),'rL_torso':('ep_01',None),'rL_upper':('ep_02','tb'),'rL_fore':('ep_03','lr'),'rL_thigh':('ep_04','tb'),'rL_shin':('ep_05','tb'),'rL_wpn':('ep_06',None),
+'rI_head':('ep_07',None),'rI_torso':('ep_08',None),'rI_upper':('ep_09','tb'),'rI_fore':('ep_10','lr'),'rI_thigh':('ep_11','tb'),'rI_shin':('ep_12','tb'),'rI_wpn':('ep_13',None),
+'rT_head':('ep_14',None),'rT_torso':('ep_15',None),'rT_upper':('ep_16','tb'),'rT_fore':('ep_17','lr'),'rT_thigh':('ep_18','tb'),'rT_shin':('ep_19','tb'),
+'rO_head':('ep_23',None),'rO_torso':('ep_24',None),'rO_upper':('ep_25','tb'),'rO_fore':('ep_26','lr'),'rO_thigh':('ep_27','tb'),'rO_shin':('ep_28','tb'),'rO_wpn':('ep_29',None),'rO_shield':('ep_30',None)})
+for k,(f,m) in RIGP.items(): M[k]=f
+
+RIGP.update({'rBat_body':('bd_00',None),'rBat_wing':('bd_01',None),'rDr_head':('bd_03',None),'rDr_front':('bd_04','tb'),'rDr_back':('bd_05','tb'),'rDr_tail':('bd_06',None)})
+for k,(f,m) in RIGP.items(): M[k]=f
 SC=0.8
 ims={}
 EV=['fSlGrass','fSlRock','fSlZombie','fSlDeath','fSkMoss','fSkWraith','fSkKnight','fSkSteel','fSkVamp',None,'fGbForest','fGbDruid','fGbHob','fGbKing','fGbShaman','fGbDemon','fBsForest','fBsSacred','fBsRock','fBsFire']
