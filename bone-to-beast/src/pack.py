@@ -26,6 +26,12 @@ RIGP={'rA_head':('pr_00',None),'rA_torso':('pr_01',None),'rA_arm':('pr_02','tr')
 'rC_head':('pr_13',None),'rC_torso':('pr_14',None),'rC_upper':('pr_15','tb'),'rC_fore':('pr_16','lr'),'rC_thigh':('pr_17','tb'),'rC_shin':('pr_18','tb'),'rC_bow':('pr_19',None),
 'rD_head':('pr_20',None),'rD_torso':('pr_21',None),'rD_upper':('pr_22','tb'),'rD_fore':('pr_23','lr'),'rD_thigh':('pr_24','tb'),'rD_shin':('pr_25','tb')}
 for k,(f,m) in RIGP.items(): M[k]=f
+
+RIGP.update({'rE_head':('gp_00',None),'rE_torso':('gp_01',None),'rE_upper':('gp_02','tb'),'rE_fore':('gp_03','gh'),'rE_thigh':('gp_04','tb'),'rE_shin':('gp_05','tb'),
+'rF_head':('gp_06',None),'rF_torso':('gp_07',None),'rF_upper':('gp_08','tb'),'rF_fore':('gp_09','gh'),'rF_thigh':('gp_10','tb'),'rF_shin':('gp_11','tb'),
+'rG_head':('gp_13',None),'rG_torso':('gp_14',None),'rG_upper':('gp_15','tb'),'rG_fore':('gp_16','gh'),'rG_thigh':('gp_17','tb'),'rG_shin':('gp_18','tb'),
+'rH_head':('gp_22',None),'rH_torso':('gp_23',None),'rH_upper':('gp_24','tb'),'rH_fore':('gp_25','gh'),'rH_thigh':('gp_26','tb'),'rH_shin':('gp_27','tb')})
+for k,(f,m) in RIGP.items(): M[k]=f
 SC=0.8
 ims={}
 EV=['fSlGrass','fSlRock','fSlZombie','fSlDeath','fSkMoss','fSkWraith','fSkKnight','fSkSteel','fSkVamp',None,'fGbForest','fGbDruid','fGbHob','fGbKing','fGbShaman','fGbDemon','fBsForest','fBsSacred','fBsRock','fBsFire']
@@ -66,6 +72,8 @@ def ends2(im,mode):
   if mode=='tb':p0=ext(ys,False);p1=ext(ys,True)
   elif mode=='lr':p0=ext(xs,False);p1=ext(xs,True)
   elif mode=='tr':p0=ext(ys,False);p1=ext(xs,True)
+  elif mode=='gh':
+    p0=P[np.argmin(xs+ys)];A=np.array(im).astype(int);gr=(A[...,1]>A[...,0]+15)&(A[...,1]>A[...,2]+15)&(A[...,3]>100);gy,gx=np.nonzero(gr);G2=np.stack([gx,gy],1).astype(float);dd=np.hypot(G2[:,0]-p0[0],G2[:,1]-p0[1]);p1=G2[dd>=np.quantile(dd,0.8)].mean(0)
   else:p0=ext(ys,False);p1=ext(xs+ys,True)
   return [round(p0[0],1),round(p0[1],1),round(p1[0],1),round(p1[1],1)]
 for k,(f,m) in RIGP.items():
