@@ -169,13 +169,26 @@ function hud(){var p=G.p,k=Math.max(0.6,Math.min(1,W/520)),x=10,y=10;ctx.save();
   ctx.restore();
   if(G.bannerT>0){ctx.globalAlpha=Math.min(1,G.bannerT*1.5);ctx.textAlign='center';ctx.font='900 '+Math.round(Math.min(W,H)*0.07)+'px Trebuchet MS,sans-serif';ctx.fillStyle='#f4efe6';ctx.shadowColor=G.form?fCol(G.form):'#d6334a';ctx.shadowBlur=20;ctx.fillText(G.banner,W/2,H*0.28);ctx.shadowBlur=0;ctx.globalAlpha=1;}}
 // ----- flow -----
+// ----- CrazyGames SDK (loaded only on CrazyGames, or with ?cg=1 for testing) -----
+var CG=null,MUTED=false,cgOn=null;
+(function(){var h=location.hostname,q=location.search;if(!/crazygames/.test(h)&&q.indexOf('cg=1')<0&&q.indexOf('crazygames_sandbox')<0)return;
+  var sc=document.createElement('script');sc.src='https://sdk.crazygames.com/crazygames-sdk-v3.js';
+  sc.onload=function(){var S=window.CrazyGames&&window.CrazyGames.SDK;if(!S)return;Promise.resolve(S.init()).then(function(){CG=S;cgOn=null;}).catch(function(){});};document.head.appendChild(sc);})();
+function cgSync(){var on=!!(G&&G.state==='play');if(!CG||on===cgOn)return;cgOn=on;try{on?CG.game.gameplayStart():CG.game.gameplayStop();}catch(e){}}
+function cgAd(kind,done,fail){if(!CG){if(fail)fail();return;}var end=function(ok){MUTED=false;try{if(AC)AC.resume();}catch(e){}if(G&&G.state==='ad')G.state=G._st||'play';last=performance.now();if(ok){if(done)done();}else if(fail)fail();};
+  try{CG.ad.requestAd(kind,{adStarted:function(){MUTED=true;try{if(AC)AC.suspend();}catch(e){}if(G&&G.state!=='ad'){G._st=G.state;G.state='ad';}},adFinished:function(){end(true);},adError:function(){end(false);}});}catch(e){end(false);}}
+function cgRevive(){if(!CG||!G||G.revived||G.t<45)return;var row=$('again').parentNode,b=document.createElement('button');b.type='button';b.className='btn';b.id='revive';
+  b.textContent=LANG==='ja'?'▶ 広告を見て復活（HP全回復）':'▶ Watch ad: revive (full HP)';row.insertBefore(b,row.firstChild);
+  b.addEventListener('click',function(){b.disabled=true;cgAd('rewarded',function(){var p=G.p;G.revived=1;p.hp=p.max;p.inv=3;G.en.forEach(function(e){var d=Math.hypot(e.x-p.x,e.y-p.y);if(d<220&&!e.boss){e.x=p.x+(e.x-p.x)/(d||1)*260;e.y=p.y+(e.y-p.y)/(d||1)*260;}});
+    b.remove();$('dead').hidden=true;$('hopBtn').hidden=false;G.state='play';last=performance.now();},function(){b.textContent=LANG==='ja'?'広告を読み込めませんでした':'Ad not available';});});}
 function over(){G.state='dead';if(G.score>hi){hi=G.score;store.set('hi',hi);}
-  setTimeout(function(){var mm=Math.floor(G.t/60),ss=Math.floor(G.t%60),tm=mm+':'+(ss<10?'0':'')+ss;$('deadT').textContent=LANG==='ja'?tm+' 生き残った':'Survived '+tm;
+  var oldR=$('revive');if(oldR)oldR.remove();setTimeout(function(){cgAd('midgame',showDead,showDead);},900);}
+function showDead(){if(!G||G.state!=='dead')return;{var mm=Math.floor(G.t/60),ss=Math.floor(G.t%60),tm=mm+':'+(ss<10?'0':'')+ss;$('deadT').textContent=LANG==='ja'?tm+' 生き残った':'Survived '+tm;
     $('deadP').textContent=(LANG==='ja'?'スコア '+G.score+' ・ '+G.kills+'体たおした':'Score '+G.score+' · '+G.kills+' defeated')+(G.score>=hi?' · '+L('New best!'):' · '+L('Best')+' '+hi);
     var el=$('deadForm');el.innerHTML='';var b=card(fCol(G.form),function(g){if(G.form)drawFormFit(g,G.form,62,90);else{var z=START_ART[G.starter]?Math.min(2,52/START_ART[G.starter][1]):1;g.scale(z,z);drawBody(g,{x:0,y:0,face:1,walk:0.6,swing:0,ground:true,h:62},{},G.starter,null);}},
-      '<b>'+formName()+'</b><span>'+[STARTERS[G.starter].name].concat(G.history.map(fName)).join(' → ')+'</span>');b.style.pointerEvents='none';el.appendChild(b);$('dead').hidden=false;$('hopBtn').hidden=true;},900);}
+      '<b>'+formName()+'</b><span>'+[STARTERS[G.starter].name].concat(G.history.map(fName)).join(' → ')+'</span>');b.style.pointerEvents='none';el.appendChild(b);$('dead').hidden=false;$('hopBtn').hidden=true;cgRevive();}}
 function start(k){lastStarter=k;newGame(k);$('title').hidden=true;$('dead').hidden=true;$('hopBtn').hidden=false;last=performance.now();}
-function frame(now){var fdt=Math.min(0.05,Math.max(0,(now-last)/1000));last=now;if(G&&G.hs>0){G.hs-=fdt;fdt*=0.12;}if(G&&G.state==='play'){if(fdt>1/50){update(fdt/2);update(fdt/2);}else if(fdt>0)update(fdt);}draw();requestAnimationFrame(frame);}
+function frame(now){var fdt=Math.min(0.05,Math.max(0,(now-last)/1000));last=now;if(G&&G.hs>0){G.hs-=fdt;fdt*=0.12;}if(G&&G.state==='play'){if(fdt>1/50){update(fdt/2);update(fdt/2);}else if(fdt>0)update(fdt);}draw();cgSync();requestAnimationFrame(frame);}
 addEventListener('keydown',function(e){keys[e.code]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].indexOf(e.code)>=0)e.preventDefault();
   var dg=/^Digit[1-8]$/.test(e.code)?+e.code.slice(5):0;if(!$('title').hidden&&dg){start(Object.keys(STARTERS)[dg-1]);return;}
   if(G&&G.state==='graft'&&dg){var b=$('cards').querySelectorAll('button')[dg-1];if(b)b.click();}});

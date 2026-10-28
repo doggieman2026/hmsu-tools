@@ -37,5 +37,10 @@ Beast Survivors is a fast survival action game. Your monster attacks automatical
 - 英語が既定（日本語端末だけ日本語）→ OK
 - 外部リンク・独自の全画面ボタンなし → OK
 - 初回ダウンロード 20MB 以下（モバイルのトップ掲載の条件）→ OK（約1.4MB）
-- SDK：Basic 提出では任意。入れる場合は Gameplay start を送る必要あり → 今回は入れずに提出（審査が通ってから Full を検討）
+- SDK：v3 を組み込み済み（2026-10-29）。CrazyGames 上でだけ読み込む（GitHub Pages 版には影響なし）。
+  - Gameplay start / stop：プレイ中かどうかが変わるたびに自動で送る（進化を選ぶ画面・ゲームオーバーで stop）
+  - midgame 広告：ゲームオーバーのあと（頻度は SDK 側が3分に1回までに制限）。広告中は一時停止・消音
+  - rewarded 広告：ゲームオーバー画面の「▶ Watch ad: revive」（1回のプレイで1度だけ、45秒以上生き残ったときだけ）。広告を見終えたときだけHP全回復。ほかのボタンと同じ大きさ
+  - 広告が出ない（Basic 期間・広告ブロック）ときは普通にゲームオーバー画面が出て止まらない
+  - テスト：URL に ?cg=1 を付けると SDK を読み込む
 - 要確認：「最初のクリックは1回まで」→ タイトルでキャラを1つ選ぶだけなので1回。

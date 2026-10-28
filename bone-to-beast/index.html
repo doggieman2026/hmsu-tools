@@ -200,7 +200,7 @@ function applyLang(){var k;
   document.documentElement.lang=LANG;}
 // ======================= audio =======================
 var AC=null;
-function snd(k){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();var t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);
+function snd(k){if(window.MUTED)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();var t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);
   var P={hit:[200,90,0.08,0.07,'square'],kill:[300,60,0.2,0.07,'sawtooth'],orb:[700,1150,0.06,0.03,'sine'],hurt:[220,70,0.25,0.1,'sawtooth'],skill:[200,800,0.25,0.06,'triangle'],graft:[180,900,0.7,0.08,'triangle'],swing:[420,220,0.06,0.025,'triangle'],jump:[300,520,0.08,0.03,'sine'],boss:[80,50,0.9,0.12,'sawtooth'],fire:[120,60,0.25,0.06,'sawtooth'],awaken:[110,880,1.4,0.1,'sawtooth']}[k];
   o.type=P[4];o.frequency.setValueAtTime(P[0],t);o.frequency.exponentialRampToValueAtTime(P[1],t+P[2]);g.gain.setValueAtTime(P[3],t);g.gain.exponentialRampToValueAtTime(0.0001,t+P[2]);o.start(t);o.stop(t+P[2]+0.02);}catch(e){}}
 // ======================= world & state =======================
