@@ -20,15 +20,15 @@ html,body{margin:0;height:100%;background:radial-gradient(ellipse at 50% 20%,#3a
 <body>
 <canvas id="cv"></canvas>
 <div class="over" id="title"><h1>BEAST MERGE</h1><p id="howto"></p><button class="btn" id="play" type="button">PLAY</button></div>
-<div class="over" id="dead" hidden><h1 id="deadT">GAME OVER</h1><p id="deadP"></p><button class="btn" id="again" type="button">AGAIN</button></div>
+<div class="over" id="dead" hidden><h1 id="deadT">GAME OVER</h1><p id="deadP"></p><button class="btn" id="cont" type="button" hidden>CONTINUE</button><button class="btn" id="again" type="button">AGAIN</button></div>
 <script>
 "use strict";
 var JA=(navigator.language||'').slice(0,2)==='ja';
 var TX=JA?{how:'同じモンスターどうしがぶつかると進化する！<br>タップ（クリック）した場所に落とそう。<br>線の上にあふれたら終わり。めざせドラゴン！',play:'あそぶ',again:'もういちど',over:'ゲームオーバー',score:'スコア',best:'ベスト',next:'つぎ',evo:'進化！',newb:'ベスト更新！'}
  :{how:'Drop monsters. Two of the same kind merge and EVOLVE!<br>Tap where you want to drop.<br>Don\'t let them pile over the line. Reach the Dragon!',play:'PLAY',again:'AGAIN',over:'GAME OVER',score:'SCORE',best:'BEST',next:'NEXT',evo:'EVOLVE!',newb:'New best!'};
 document.getElementById('howto').innerHTML=TX.how;document.getElementById('play').textContent=TX.play;document.getElementById('again').textContent=TX.again;
-var ART=new Image(),ARTOK=false;ART.onload=function(){ARTOK=true;};ART.src='../bone-to-beast/art/atlas.webp?v=10';
-var ATLAS={"stPebble":[1276,2559,57,49],"fSlGrass":[1099,2559,64,57],"stSprout":[0,2467,57,90],"stHatch":[511,2559,54,68],"stBat":[870,2467,91,83],"fBtFairy":[308,2467,119,87],"fDrForest":[749,2366,99,97],"fBsFire":[414,1693,184,153],"fmBsLion":[1104,1316,196,186],"uChimera":[0,409,574,382],"uDragon":[386,0,758,404]};
+var ART=new Image(),ARTOK=false;ART.onload=function(){ARTOK=true;};ART.src='art.webp?v=1';
+var ATLAS={"stPebble":[0,0,57,49],"fSlGrass":[59,0,64,57],"stSprout":[125,0,57,90],"stHatch":[184,0,54,68],"stBat":[240,0,91,83],"fBtFairy":[333,0,119,87],"fDrForest":[454,0,99,97],"fBsFire":[555,0,184,153],"fmBsLion":[741,0,196,186],"uChimera":[0,188,300,200],"uDragon":[302,188,300,160]};
 // tier: sprite, radius, bubble colour, name
 var T=[['stPebble',15,'#cfd3e0','Pebble','ころいし'],['fSlGrass',18,'#6cc552','Slime','スライム'],['stSprout',23,'#9be07a','Sprout','めばえ'],['stHatch',28,'#c9b38a','Hatchling','ちびりゅう'],['stBat',34,'#9b6bd6','Bat Pup','こうもり'],
  ['fBtFairy',41,'#7fb8e8','Fairy','ようせい'],['fDrForest',48,'#4fae6a','Forest Drake','もりドレイク'],['fBsFire',56,'#ff8c3a','Flame Beast','ほのおのけもの'],['fmBsLion',65,'#f2b93b','Lion King','しし王'],['uChimera',75,'#d6334a','Chimera','キマイラ'],['uDragon',87,'#ff5a2a','Dragon','ドラゴン']];
@@ -40,9 +40,9 @@ var store={get:function(k,f){try{var v=localStorage.getItem('bm-'+k);return v==n
 var best=store.get('best',0),seen=store.get('seen',1);
 var B=[],FX=[],TXT=[],score=0,cur,nxt,aimX=BW/2,cool=0,state='title',dangerT=0,shake=0,combo=0,comboT=0,t=0,maxTier=0;
 function rndTier(){var r=Math.random();return r<0.32?0:r<0.6?1:r<0.82?2:r<0.95?3:4;}
-function reset(){B=[];FX=[];TXT=[];score=0;cur=rndTier();nxt=rndTier();cool=0;dangerT=0;combo=0;maxTier=0;state='play';}
+function reset(){used=false;B=[];FX=[];TXT=[];score=0;cur=rndTier();nxt=rndTier();cool=0;dangerT=0;combo=0;maxTier=0;state='play';}
 // ---- audio ----
-var AC=null;function tone(f,d,type,vol){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),v=AC.createGain(),s=AC.currentTime;o.type=type||'triangle';o.frequency.setValueAtTime(f,s);o.frequency.exponentialRampToValueAtTime(f*1.6,s+d);v.gain.setValueAtTime(vol||0.12,s);v.gain.exponentialRampToValueAtTime(0.0001,s+d);o.connect(v);v.connect(AC.destination);o.start(s);o.stop(s+d);}catch(e){}}
+var AC=null,MUTED=false,used=false;function tone(f,d,type,vol){if(MUTED)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),v=AC.createGain(),s=AC.currentTime;o.type=type||'triangle';o.frequency.setValueAtTime(f,s);o.frequency.exponentialRampToValueAtTime(f*1.6,s+d);v.gain.setValueAtTime(vol||0.12,s);v.gain.exponentialRampToValueAtTime(0.0001,s+d);o.connect(v);v.connect(AC.destination);o.start(s);o.stop(s+d);}catch(e){}}
 // ---- input ----
 function toWorld(cx){return (cx-OX)/S;}
 function pdown(e){if(state!=='play')return;aimX=toWorld(e.clientX);aiming=true;}
@@ -77,8 +77,17 @@ function update(dt){t+=dt;if(state!=='play')return;if(cool>0)cool-=dt;if(comboT>
   for(var s=0;s<4;s++)step(dt/4);
   var over=false;B.forEach(function(o){o.pop=Math.max(0,o.pop-dt*3);if(o.age>1.2&&o.y-o.r<LINE&&Math.abs(o.vy)<200)over=true;});
   dangerT=over?dangerT+dt:Math.max(0,dangerT-dt*2);if(dangerT>2)gameOver();}
-function gameOver(){state='dead';var nb=score>best;if(nb){best=score;store.set('best',best);}tone(160,0.6,'sawtooth',0.1);
-  setTimeout(function(){document.getElementById('deadT').textContent=TX.over;document.getElementById('deadP').innerHTML=TX.score+' '+score+(nb?'<br>'+TX.newb:'<br>'+TX.best+' '+best)+'<br>'+(JA?'さいこう進化：':'Top form: ')+(JA?T[maxTier][4]:T[maxTier][3]);document.getElementById('dead').hidden=false;},700);}
+var nb=false;function gameOver(){state='dead';nb=score>best;if(nb){best=score;store.set('best',best);}tone(160,0.6,'sawtooth',0.1);
+  setTimeout(function(){cgAd('midgame',showDead,showDead);},700);}
+function showDead(){{document.getElementById('deadT').textContent=TX.over;document.getElementById('deadP').innerHTML=TX.score+' '+score+(nb?'<br>'+TX.newb:'<br>'+TX.best+' '+best)+'<br>'+(JA?'さいこう進化：':'Top form: ')+(JA?T[maxTier][4]:T[maxTier][3]);var cb=document.getElementById('cont');cb.hidden=!(CG&&!used&&score>=500);cb.disabled=false;cb.textContent=JA?'▶ 広告を見て上をかたづけて続ける':'▶ Watch ad: clear the top & continue';document.getElementById('dead').hidden=false;}}
+document.getElementById('cont').onclick=function(){var cb=this;cb.disabled=true;cgAd('rewarded',function(){used=true;B=B.filter(function(o){return o.y-o.r>LINE+70;});dangerT=0;cool=0.3;document.getElementById('dead').hidden=true;state='play';TXT.push({x:BW/2,y:LINE+40,t:JA?'つづけよう！':'Keep going!',l:1.2,L:1.2,z:24,c:'#ffde6a'});},function(){cb.textContent=JA?'広告を読み込めませんでした':'Ad not available';});};
+// ---- CrazyGames SDK (only on CrazyGames, or ?cg=1) ----
+var CG=null,cgOn=null;
+(function(){var h=location.hostname,q=location.search;if(!/crazygames/.test(h)&&q.indexOf('cg=1')<0&&q.indexOf('crazygames_sandbox')<0)return;var sc=document.createElement('script');sc.src='https://sdk.crazygames.com/crazygames-sdk-v3.js';
+  sc.onload=function(){var S0=window.CrazyGames&&window.CrazyGames.SDK;if(!S0)return;Promise.resolve(S0.init()).then(function(){CG=S0;cgOn=null;}).catch(function(){});};document.head.appendChild(sc);})();
+function cgSync(){var on=state==='play';if(!CG||on===cgOn)return;cgOn=on;try{on?CG.game.gameplayStart():CG.game.gameplayStop();}catch(e){}}
+function cgAd(kind,done,fail){if(!CG){if(fail)fail();return;}var st0=state,end=function(ok){MUTED=false;try{if(AC)AC.resume();}catch(e){}if(state==='ad')state=st0;last=performance.now();if(ok){if(done)done();}else if(fail)fail();};
+  try{CG.ad.requestAd(kind,{adStarted:function(){MUTED=true;try{if(AC)AC.suspend();}catch(e){}state='ad';},adFinished:function(){end(true);},adError:function(){end(false);}});}catch(e){end(false);}}
 // ---- draw ----
 function spr(k,x,y,r,rot,sc){var a=ATLAS[T[k][0]];if(!a||!ARTOK)return;var f=Math.min(2.25*r/a[2],2.05*r/a[3])*(sc||1),w=a[2]*f,h=a[3]*f;g.save();g.translate(x,y);g.rotate(rot||0);g.drawImage(ART,a[0],a[1],a[2],a[3],-w/2,-h/2+r*0.06,w,h);g.restore();}
 function bubble(k,x,y,r,rot,sc){var c=T[k][2];sc=sc||1;var R=r*sc;var gr=g.createRadialGradient(x-R*0.35,y-R*0.4,R*0.1,x,y,R);gr.addColorStop(0,'rgba(255,255,255,.55)');gr.addColorStop(0.35,c+'cc');gr.addColorStop(1,c+'66');
@@ -105,7 +114,7 @@ function draw(){g.setTransform(DPR,0,0,DPR,0,0);g.clearRect(0,0,W,H);var sh=shak
   for(var i=0;i<T.length;i++){var ex=WALL+14+i*((BW-2*WALL-28)/(T.length-1));if(i<seen)bubble(i,ex,ey,14,0);else{g.fillStyle='rgba(255,255,255,.08)';g.beginPath();g.arc(ex,ey,14,0,7);g.fill();g.fillStyle='rgba(255,255,255,.4)';g.fillText('?',ex,ey+4);}}
   g.restore();}
 function tick(){FX.forEach(function(f){f.l-=1/60;if(!f.ring){f.x+=f.vx/60;f.y+=f.vy/60;f.vy+=500/60;}});FX=FX.filter(function(f){return f.l>0;});TXT.forEach(function(o){o.l-=1/60;o.y-=30/60;});TXT=TXT.filter(function(o){return o.l>0;});}
-var last=performance.now();function frame(now){var dt=Math.min(0.033,(now-last)/1000);last=now;update(dt);tick();draw();requestAnimationFrame(frame);}
+var last=performance.now();function frame(now){var dt=Math.min(0.033,(now-last)/1000);last=now;update(dt);tick();draw();cgSync();requestAnimationFrame(frame);}
 requestAnimationFrame(frame);
 </script>
 </body>
