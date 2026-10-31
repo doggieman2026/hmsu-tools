@@ -1,11 +1,13 @@
-# Beast Merge — CrazyGames 提出キット（作りかけ）
+# Beast Merge — CrazyGames 提出キット
 
 | ファイル | 中身 |
 | --- | --- |
 | beast-merge-game.zip | ゲーム本体（index.html と art.webp、合計約95KB、外部読み込みなし） |
 | cover-landscape-1920x1080.png / cover-portrait-800x1200.png / cover-square-800x800.png | カバー3種（文字はタイトルだけ） |
 
-まだないもの：プレビュー動画（横・縦）。
+| preview-landscape-1080p.mp4 / preview-portrait-1080x1620.mp4 | プレビュー動画（18.5秒・無音・最初のコマが表紙） |
+
+PCの横長画面では、進化の順番を名前付きでびんの右に表示する（11/1 追加）。
 
 ## SDK（組み込み済み）
 - CrazyGames 上か、URL に ?cg=1 を付けたときだけ読み込む

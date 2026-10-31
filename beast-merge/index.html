@@ -33,8 +33,8 @@ var ATLAS={"stPebble":[0,0,57,49],"fSlGrass":[59,0,64,57],"stSprout":[125,0,57,9
 var T=[['stPebble',15,'#cfd3e0','Pebble','ころいし'],['fSlGrass',18,'#6cc552','Slime','スライム'],['stSprout',23,'#9be07a','Sprout','めばえ'],['stHatch',28,'#c9b38a','Hatchling','ちびりゅう'],['stBat',34,'#9b6bd6','Bat Pup','こうもり'],
  ['fBtFairy',41,'#7fb8e8','Fairy','ようせい'],['fDrForest',48,'#4fae6a','Forest Drake','もりドレイク'],['fBsFire',56,'#ff8c3a','Flame Beast','ほのおのけもの'],['fmBsLion',65,'#f2b93b','Lion King','しし王'],['uChimera',75,'#d6334a','Chimera','キマイラ'],['uDragon',87,'#ff5a2a','Dragon','ドラゴン']];
 var BW=360,BH=600,TOP=118,LINE=150,WALL=10;// world units
-var cv=document.getElementById('cv'),g=cv.getContext('2d'),W,H,DPR,S,OX,OY;
-function fit(){DPR=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;S=Math.min(W/(BW+16),H/(BH+170));OX=(W-BW*S)/2;OY=Math.max(8,(H-(BH+150)*S)/2)+0;}
+var LAND=false,cv=document.getElementById('cv'),g=cv.getContext('2d'),W,H,DPR,S,OX,OY;
+function fit(){DPR=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;LAND=W/H>1.15;if(LAND){S=Math.min(W/(BW+420),H/(BH+16));OX=(W-BW*S)/2;OY=(H-(BH+6)*S)/2;}else{S=Math.min(W/(BW+16),H/(BH+170));OX=(W-BW*S)/2;OY=Math.max(8,(H-(BH+150)*S)/2);}}
 addEventListener('resize',fit);fit();
 var store={get:function(k,f){try{var v=localStorage.getItem('bm-'+k);return v==null?f:JSON.parse(v);}catch(e){return f;}},set:function(k,v){try{localStorage.setItem('bm-'+k,JSON.stringify(v));}catch(e){}}};
 var best=store.get('best',0),seen=store.get('seen',1);
@@ -110,8 +110,10 @@ function draw(){g.setTransform(DPR,0,0,DPR,0,0);g.clearRect(0,0,W,H);var sh=shak
   FX.forEach(function(f){var k=f.l/(f.L||0.8);if(f.ring){g.strokeStyle=f.c;g.globalAlpha=k;g.lineWidth=5*k;g.beginPath();g.arc(f.x,f.y,f.R-(f.R-f.r)*k,0,7);g.stroke();g.globalAlpha=1;return;}g.globalAlpha=Math.min(1,f.l*2);g.fillStyle=f.c;g.beginPath();g.arc(f.x,f.y,f.s,0,7);g.fill();g.globalAlpha=1;});
   TXT.forEach(function(o){var k=Math.max(0,1-(o.L-o.l)/0.15),z=o.z*(1+0.6*k);g.globalAlpha=Math.min(1,o.l*2);g.font='900 '+z.toFixed(0)+'px Trebuchet MS,sans-serif';g.textAlign='center';g.lineWidth=4;g.strokeStyle='rgba(20,8,20,.8)';g.strokeText(o.t,o.x,o.y);g.fillStyle=o.c;g.fillText(o.t,o.x,o.y);g.globalAlpha=1;});
   // evolution ring
-  var ey=BH+44;g.font='900 11px Trebuchet MS,sans-serif';g.fillStyle='#f4dccb';g.textAlign='center';g.fillText(JA?'しんかの じゅんばん':'EVOLUTION',BW/2,BH+22);
-  for(var i=0;i<T.length;i++){var ex=WALL+14+i*((BW-2*WALL-28)/(T.length-1));if(i<seen)bubble(i,ex,ey,14,0);else{g.fillStyle='rgba(255,255,255,.08)';g.beginPath();g.arc(ex,ey,14,0,7);g.fill();g.fillStyle='rgba(255,255,255,.4)';g.fillText('?',ex,ey+4);}}
+  if(LAND){g.font='900 13px Trebuchet MS,sans-serif';g.fillStyle='#f4dccb';g.textAlign='left';g.fillText(JA?'しんかの じゅんばん':'EVOLUTION',BW+28,TOP-66);
+    for(var i=T.length-1;i>=0;i--){var yy=BH-18-i*((BH-TOP+10)/(T.length-1)),xx=BW+46;if(i<seen){bubble(i,xx,yy,17,0);g.fillStyle=i===maxTier&&state==='play'?'#ffde6a':'#f4dccb';g.textAlign='left';g.font='800 14px Trebuchet MS,sans-serif';g.fillText(JA?T[i][4]:T[i][3],xx+26,yy+5);}else{g.fillStyle='rgba(255,255,255,.08)';g.beginPath();g.arc(xx,yy,17,0,7);g.fill();g.fillStyle='rgba(255,255,255,.4)';g.textAlign='center';g.fillText('?',xx,yy+4);}}}
+  else{var ey=BH+44;g.font='900 11px Trebuchet MS,sans-serif';g.fillStyle='#f4dccb';g.textAlign='center';g.fillText(JA?'しんかの じゅんばん':'EVOLUTION',BW/2,BH+22);
+  for(var i=0;i<T.length;i++){var ex=WALL+14+i*((BW-2*WALL-28)/(T.length-1));if(i<seen)bubble(i,ex,ey,14,0);else{g.fillStyle='rgba(255,255,255,.08)';g.beginPath();g.arc(ex,ey,14,0,7);g.fill();g.fillStyle='rgba(255,255,255,.4)';g.fillText('?',ex,ey+4);}}}
   g.restore();}
 function tick(){FX.forEach(function(f){f.l-=1/60;if(!f.ring){f.x+=f.vx/60;f.y+=f.vy/60;f.vy+=500/60;}});FX=FX.filter(function(f){return f.l>0;});TXT.forEach(function(o){o.l-=1/60;o.y-=30/60;});TXT=TXT.filter(function(o){return o.l>0;});}
 var last=performance.now();function frame(now){var dt=Math.min(0.033,(now-last)/1000);last=now;update(dt);tick();draw();cgSync();requestAnimationFrame(frame);}
