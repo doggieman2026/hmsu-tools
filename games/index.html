@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>hmsu Games</title>
+<meta name="description" content="ブラウザですぐ遊べるゲーム集。インストール不要・無料。">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@1,900&family=M+PLUS+Rounded+1c:wght@500;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#120a1e;--card:#1e1230;--line:rgba(255,210,122,.28);--ink:#fff3e6;--sub:#cdb8c8;--acc:#ffb04a}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% -10%,#3a1838 0%,var(--bg) 60%) fixed;color:var(--ink);font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",system-ui,sans-serif}
+header{text-align:center;padding:42px 16px 18px}
+h1{margin:0;font-family:Rubik,sans-serif;font-style:italic;font-weight:900;font-size:clamp(40px,10vw,68px);line-height:1;background:linear-gradient(#fff6c8,#ffcf4a 40%,#ff7a3a 70%,#c81e3a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 0 #2a0712)}
+header p{margin:12px 0 0;color:var(--sub);font-size:15px}
+main{max-width:1080px;margin:0 auto;padding:10px 16px 48px;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
+a.card{display:flex;flex-direction:column;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;transition:transform .15s,box-shadow .15s}
+a.card:hover,a.card:focus-visible{transform:translateY(-4px);box-shadow:0 12px 28px rgba(0,0,0,.45),0 0 0 2px var(--acc);outline:none}
+.thumb{aspect-ratio:3/4;max-height:300px;width:100%;object-fit:cover;object-position:top;display:block;background:#0b0614}
+.body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px;flex:1}
+.name{font-family:Rubik,sans-serif;font-style:italic;font-weight:900;font-size:22px;letter-spacing:.3px}
+.tag{font-size:12px;color:var(--acc);font-weight:800}
+.desc{font-size:14px;line-height:1.6;color:var(--sub);flex:1}
+.play{margin-top:6px;align-self:flex-start;font-weight:800;font-size:15px;padding:8px 18px;border-radius:999px;background:linear-gradient(#ffb04a,#ff6a2a 55%,#d8343e);color:#fff}
+.new{position:absolute;margin:10px;padding:3px 10px;border-radius:999px;background:#ff3b55;color:#fff;font-size:12px;font-weight:800}
+.wrap{position:relative}
+footer{text-align:center;color:#8a7488;font-size:12px;padding:0 16px 32px}
+</style>
+</head>
+<body>
+<header><h1>hmsu Games</h1><p>ブラウザですぐ遊べる。インストールなし・無料。<br>Free browser games — no install.</p></header>
+<main id="list"></main>
+<footer>スマホでもPCでも遊べます / Works on phone and PC</footer>
+<script>
+var G=[
+ ['../beast-merge/','beast-merge','Beast Merge','パズル / Merge puzzle','同じモンスターをくっつけると進化！ころいしからドラゴンまで、全11段階。',1],
+ ['../bone-to-beast/survivors.html','survivors','Beast Survivors','アクション / Survival','まわりから押しよせる敵をたおして、その血で進化。転生してさらに強く。'],
+ ['../bone-to-beast/','bone-to-beast','Bone to Beast','アクション / Side-scroller','ガイコツから始まる横スクロール。どの血を集めるかで進化先が変わる。'],
+ ['../maze-dash/','maze-dash','Maze Dash','迷路 / Maze','時計とのたたかい。早くぬけるほど星がもらえる。毎日のチャレンジつき。'],
+ ['../star-shift/','star-shift','Star Shift','シューティング / Shooter','波のように来る敵をうちおとし、5回ごとのボスにいどむ。',0,'center'],
+ ['../time-flock/','time-flock','Time Flock','シューティング / Shooter','自分が動くときだけ時間が進む。たおした敵が仲間になる。'],
+ ['../twin-steps/','twin-steps','Twin Steps','パズル / Puzzle','1回の操作で2人が同時に動く。2人を同じゴールへ。'],
+ ['../meiro-game/','meiro-game','きょうのめいろ','迷路 / Daily maze','毎日5つの迷路。どれだけ早くぬけられる？']];
+var el=document.getElementById('list');
+G.forEach(function(g){var a=document.createElement('a');a.className='card';a.href=g[0];
+  a.innerHTML='<div class="wrap">'+(g[5]?'<span class="new">NEW</span>':'')+'<img class="thumb" loading="lazy" src="img/'+g[1]+'.jpg" alt=""'+(g[6]?' style="object-position:'+g[6]+'"':'')+'></div><div class="body"><div class="name"></div><div class="tag"></div><div class="desc"></div><span class="play">あそぶ ▶</span></div>';
+  a.querySelector('.name').textContent=g[2];a.querySelector('.tag').textContent=g[3];a.querySelector('.desc').textContent=g[4];el.appendChild(a);});
+</script>
+</body>
+</html>
