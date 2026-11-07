@@ -29,6 +29,7 @@
 | star-shift.zip | Star Shift | Wave shooter with a boss every 5 waves — pick 1 of 3 upgrades each round. | Shooter / roguelite, arcade | 480×800 |
 | time-flock.zip | Time Flock | Time moves only when you move. Defeated enemies join your flock. | Shooter / bullet-hell, strategy | 480×800 |
 | twin-steps.zip | Twin Steps | One move moves two characters on two boards. Get both to the goal. | Puzzle / logic, minimalist | 480×800 |
+| evolve-2048.zip | Evolve 2048 | Swipe to merge monsters and evolve them, tile by tile, all the way to a 2048 Dragon. | Puzzle / 2048, merge, monsters | 480×800 |
 | meiro-game.zip | Daily Maze | Five fresh mazes every day. How fast can you escape? | Puzzle / maze, daily | 480×800 |
 
 ※ AIを使って作ったことを書く欄（AI generation disclosure）があれば「Yes」にする。
