@@ -20,7 +20,7 @@
 | beast-merge.zip | Beast Merge | Drop monsters, merge two of a kind and evolve them — from a pebble to a Dragon. | Puzzle / merge, physics, monsters, casual | 480×800 |
 | rune-blocks.zip | Rune Blocks | Place gem blocks on an 8×8 board and clear rows and columns for big combos. | Puzzle / block-puzzle, casual, relaxing | 480×800 |
 | potion-sort.zip | Potion Sort | Pour potions between flasks until every colour has its own bottle. | Puzzle / sorting, casual, relaxing | 480×800 |
-| monster-match.zip | Monster Match | Tap stacked monster tiles and match three of a kind before the tray fills up. | Puzzle / match-3, tiles, casual | 480×800 |
+| monster-match.zip | Sweet Match | Tap stacked sweet tiles and match three of a kind before the tray fills up. | Puzzle / match-3, tiles, casual | 480×800 |
 | bolt-jam.zip | Bolt Jam | Unscrew bolts into matching boxes — planks swing and fall as you go. | Puzzle / physics, casual | 480×800 |
 | sky-stack.zip | Sky Stack | Tap to drop blocks and stack them into the sky. Perfect drops build combos. | Action / one-button, arcade, casual | 480×800 |
 | beast-survivors.zip | Beast Survivors | Survive endless monsters, drink their blood and evolve into a legend. | Action / survivor, roguelite, monsters | 480×800 |
@@ -29,7 +29,7 @@
 | star-shift.zip | Star Shift | Wave shooter with a boss every 5 waves — pick 1 of 3 upgrades each round. | Shooter / roguelite, arcade | 480×800 |
 | time-flock.zip | Time Flock | Time moves only when you move. Defeated enemies join your flock. | Shooter / bullet-hell, strategy | 480×800 |
 | twin-steps.zip | Twin Steps | One move moves two characters on two boards. Get both to the goal. | Puzzle / logic, minimalist | 480×800 |
-| evolve-2048.zip | Evolve 2048 | Swipe to merge monsters and evolve them, tile by tile, all the way to a 2048 Dragon. | Puzzle / 2048, merge, monsters | 480×800 |
+| evolve-2048.zip | Cosmic 2048 | Swipe to merge stardust into planets, stars and finally a 2048 Galaxy. | Puzzle / 2048, merge, space | 480×800 |
 | meiro-game.zip | Daily Maze | Five fresh mazes every day. How fast can you escape? | Puzzle / maze, daily | 480×800 |
 
 ※ AIを使って作ったことを書く欄（AI generation disclosure）があれば「Yes」にする。
