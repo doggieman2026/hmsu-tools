@@ -30,6 +30,7 @@
 | time-flock.zip | Time Flock | Time moves only when you move. Defeated enemies join your flock. | Shooter / bullet-hell, strategy | 480×800 |
 | twin-steps.zip | Twin Steps | One move moves two characters on two boards. Get both to the goal. | Puzzle / logic, minimalist | 480×800 |
 | evolve-2048.zip | Cosmic 2048 | Swipe to merge stardust into planets, stars and finally a 2048 Galaxy. | Puzzle / 2048, merge, space | 480×800 |
+| neon-bricks.zip | Neon Bricks | Aim, fire a stream of balls and smash numbered neon bricks before they reach the bottom. | Action / brick-breaker, arcade | 480×800 |
 | meiro-game.zip | Daily Maze | Five fresh mazes every day. How fast can you escape? | Puzzle / maze, daily | 480×800 |
 
 ※ AIを使って作ったことを書く欄（AI generation disclosure）があれば「Yes」にする。
