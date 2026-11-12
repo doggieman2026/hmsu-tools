@@ -34,6 +34,7 @@
 | fruit-slash.zip | Fruit Slash | Swipe to slice flying fruit, chain combos and dodge the bombs. | Action / arcade, slicing, casual | 480×800 |
 | slime-siege.zip | Slime Siege | Build arrow, cannon and frost towers to stop 20 waves of bouncing slimes. | Strategy / tower-defense, casual | 480×800 |
 | hoppy-lane.zip | Hoppy Lane | Hop across roads and rivers — dodge cars, ride logs, outrun the eagle. | Action / arcade, endless | 480×800 |
+| pin-spin.zip | Pin Spin | Tap to throw pins into a spinning target — hit another pin and it is over. Boss every 5 stages. | Action / one-tap, arcade | 480×800 |
 | meiro-game.zip | Daily Maze | Five fresh mazes every day. How fast can you escape? | Puzzle / maze, daily | 480×800 |
 
 ※ AIを使って作ったことを書く欄（AI generation disclosure）があれば「Yes」にする。
