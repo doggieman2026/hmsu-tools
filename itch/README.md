@@ -39,6 +39,7 @@
 | car-out.zip | Car Out | Tap cars to drive them out of a jammed parking lot — pick the right order or BONK! | Puzzle / parking jam, casual | 480×800 |
 | color-hop.zip | Color Hop | Tap to hop through spinning rings — you can only pass the part that matches your color. | Action / one-tap, arcade | 480×800 |
 | spiral-drop.zip | Spiral Drop | Spin the tower and drop the ball through the gaps — avoid red, chain falls to become a fireball. | Action / helix, arcade | 480×800 |
+| swing-pop.zip | Swing Pop | Hold to hook a ring and swing, let go to fly — how far can you get without falling in the sea? | Action / swing, one-button | 480×800 |
 | meiro-game.zip | Daily Maze | Five fresh mazes every day. How fast can you escape? | Puzzle / maze, daily | 480×800 |
 
 ※ AIを使って作ったことを書く欄（AI generation disclosure）があれば「Yes」にする。
