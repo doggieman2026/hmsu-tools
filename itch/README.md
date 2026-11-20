@@ -42,6 +42,7 @@
 | swing-pop.zip | Swing Pop | Hold to hook a ring and swing, let go to fly — how far can you get without falling in the sea? | Action / swing, one-button | 480×800 |
 | tiny-putt.zip | Tiny Putt | Drag-and-release mini golf — 9 holes with walls, sand, water, bumpers and windmills. | Sports / mini golf, casual | 480×800 |
 | bubble-pop.zip | Bubble Pop | Classic bubble shooter with smiley bubbles — match 3 to pop and drop the rest. | Puzzle / bubble shooter, casual | 480×800 |
+| cloud-hop.zip | Cloud Hop | A bouncy bunny climbs the clouds — slide to steer, dodge crumbling clouds, bounce on mushrooms. | Action / endless jumper | 480×800 |
 | meiro-game.zip | Daily Maze | Five fresh mazes every day. How fast can you escape? | Puzzle / maze, daily | 480×800 |
 
 ※ AIを使って作ったことを書く欄（AI generation disclosure）があれば「Yes」にする。
