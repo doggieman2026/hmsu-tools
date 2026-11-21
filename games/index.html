@@ -4,7 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>hmsu Games</title>
-<meta name="description" content="ブラウザですぐ遊べるゲーム集。インストール不要・無料。">
+<meta name="description" content="ブラウザですぐ遊べるゲーム集。インストール不要・無料。オフラインでも遊べます。">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#120a1e">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="hmsu Games">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@1,900&family=M+PLUS+Rounded+1c:wght@500;800&display=swap" rel="stylesheet">
 <style>
@@ -26,10 +31,14 @@ a.card:hover,a.card:focus-visible{transform:translateY(-4px);box-shadow:0 12px 2
 .new{position:absolute;margin:10px;padding:3px 10px;border-radius:999px;background:#ff3b55;color:#fff;font-size:12px;font-weight:800}
 .wrap{position:relative}
 footer{text-align:center;color:#8a7488;font-size:12px;padding:0 16px 32px}
+#off{max-width:1080px;margin:0 auto 6px;padding:0 16px;text-align:center;font-size:13px;color:var(--sub);line-height:1.7}
+#off b{color:var(--acc)}
+#inst{font:inherit;font-weight:800;font-size:14px;margin-top:8px;padding:8px 18px;border-radius:999px;border:1px solid var(--line);background:#2a1a40;color:var(--ink);cursor:pointer}
 </style>
 </head>
 <body>
 <header><h1>hmsu Games</h1><p>ブラウザですぐ遊べる。インストールなし・無料。<br>Free browser games — no install.</p></header>
+<div id="off"><span id="offmsg"></span><br><button id="inst" type="button" hidden></button></div>
 <main id="list"></main>
 <footer>スマホでもPCでも遊べます / Works on phone and PC</footer>
 <script>
@@ -67,6 +76,20 @@ var el=document.getElementById('list');
 G.forEach(function(g){var a=document.createElement('a');a.className='card';a.href=g[0];
   a.innerHTML='<div class="wrap">'+(g[5]?'<span class="new">NEW</span>':'')+'<img class="thumb" loading="lazy" src="img/'+g[1]+'.jpg" alt=""'+(g[6]?' style="object-position:'+g[6]+'"':'')+'></div><div class="body"><div class="name"></div><div class="tag"></div><div class="desc"></div><span class="play">あそぶ ▶</span></div>';
   a.querySelector('.name').textContent=g[2];a.querySelector('.tag').textContent=g[3];a.querySelector('.desc').textContent=g[4];el.appendChild(a);});
+
+// ---- offline (PWA) ----
+(function(){var ja=(navigator.language||'').slice(0,2)==='ja',m=document.getElementById('offmsg'),b=document.getElementById('inst'),ios=/iPhone|iPad|iPod/.test(navigator.userAgent),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+  function say(t){m.innerHTML=t;}
+  if(!('serviceWorker' in navigator)){return;}
+  navigator.serviceWorker.register('../sw.js',{scope:'../'}).then(function(reg){
+    say(ja?'⏳ オフライン用にゲームを保存中…':'⏳ Saving games for offline play…');
+    navigator.serviceWorker.ready.then(function(){say(ja?'✅ <b>オフラインでも遊べます</b>（一度開いたこの端末なら、電波がなくてもOK）':'✅ <b>Playable offline</b> on this device');});
+  }).catch(function(){});
+  if(standalone)return;
+  var dp=null;addEventListener('beforeinstallprompt',function(e){e.preventDefault();dp=e;b.textContent=ja?'📲 ホーム画面に追加（アプリみたいに使える）':'📲 Add to home screen';b.hidden=false;});
+  b.onclick=function(){if(dp){dp.prompt();dp=null;b.hidden=true;}};
+  if(ios){b.textContent=ja?'📲 ホーム画面に追加：下の「共有」→「ホーム画面に追加」':'📲 Share → Add to Home Screen';b.hidden=false;b.onclick=null;}
+})();
 </script>
 </body>
 </html>

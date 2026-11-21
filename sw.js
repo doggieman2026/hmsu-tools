@@ -1,0 +1,118 @@
+// 自動生成（tools/build-offline.py）。手で書きかえない。
+const CACHE = 'hmsu-d8cc6ff525';
+const FILES = [
+"./games/",
+"./games/index.html",
+"./games/manifest.webmanifest",
+"./games/icon-192.png",
+"./games/icon-512.png",
+"./games/img/cloud-hop.jpg",
+"./cloud-hop/",
+"./cloud-hop/index.html",
+"./games/img/bubble-pop.jpg",
+"./bubble-pop/",
+"./bubble-pop/index.html",
+"./games/img/tiny-putt.jpg",
+"./tiny-putt/",
+"./tiny-putt/index.html",
+"./games/img/swing-pop.jpg",
+"./swing-pop/",
+"./swing-pop/index.html",
+"./games/img/spiral-drop.jpg",
+"./spiral-drop/",
+"./spiral-drop/index.html",
+"./games/img/color-hop.jpg",
+"./color-hop/",
+"./color-hop/index.html",
+"./games/img/car-out.jpg",
+"./car-out/",
+"./car-out/index.html",
+"./games/img/hex-stack.jpg",
+"./hex-stack/",
+"./hex-stack/index.html",
+"./games/img/pin-spin.jpg",
+"./pin-spin/",
+"./pin-spin/index.html",
+"./games/img/hoppy-lane.jpg",
+"./hoppy-lane/",
+"./hoppy-lane/index.html",
+"./games/img/slime-siege.jpg",
+"./slime-siege/",
+"./slime-siege/index.html",
+"./games/img/fruit-slash.jpg",
+"./fruit-slash/",
+"./fruit-slash/index.html",
+"./games/img/neon-bricks.jpg",
+"./neon-bricks/",
+"./neon-bricks/index.html",
+"./games/img/evolve-2048.jpg",
+"./evolve-2048/",
+"./evolve-2048/index.html",
+"./games/img/mermaid-escape.jpg",
+"./mermaid-escape/",
+"./mermaid-escape/index.html",
+"./games/img/slime-ghost.jpg",
+"./slime-ghost/",
+"./slime-ghost/index.html",
+"./games/img/sky-stack.jpg",
+"./sky-stack/",
+"./sky-stack/index.html",
+"./games/img/bolt-jam.jpg",
+"./bolt-jam/",
+"./bolt-jam/index.html",
+"./games/img/monster-match.jpg",
+"./monster-match/",
+"./monster-match/index.html",
+"./games/img/potion-sort.jpg",
+"./potion-sort/",
+"./potion-sort/index.html",
+"./games/img/rune-blocks.jpg",
+"./rune-blocks/",
+"./rune-blocks/index.html",
+"./games/img/beast-merge.jpg",
+"./beast-merge/",
+"./beast-merge/index.html",
+"./beast-merge/art.webp?v=1",
+"./games/img/survivors.jpg",
+"./bone-to-beast/survivors.html",
+"./bone-to-beast/art/atlas.webp?v=10",
+"./games/img/bone-to-beast.jpg",
+"./bone-to-beast/",
+"./bone-to-beast/index.html",
+"./games/img/maze-dash.jpg",
+"./maze-dash/",
+"./maze-dash/index.html",
+"./games/img/star-shift.jpg",
+"./star-shift/",
+"./star-shift/index.html",
+"./games/img/time-flock.jpg",
+"./time-flock/",
+"./time-flock/index.html",
+"./games/img/twin-steps.jpg",
+"./twin-steps/",
+"./twin-steps/index.html",
+"./games/img/meiro-game.jpg",
+"./meiro-game/",
+"./meiro-game/index.html"
+];
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => Promise.all(FILES.map(f => c.add(new Request(f, {cache: 'reload'})).catch(() => {})))).then(() => self.skipWaiting()));
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('hmsu-') && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+});
+self.addEventListener('fetch', e => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  const same = url.origin === location.origin;
+  const font = /fonts\.(googleapis|gstatic)\.com$/.test(url.hostname);
+  if (!same && !font) return;               // ads / SDKs: network only
+  e.respondWith(caches.open(CACHE).then(async c => {
+    const hit = await c.match(req, {ignoreSearch: false}) || (same && await c.match(req, {ignoreSearch: true}));
+    const net = fetch(req).then(r => { if (r && (r.ok || r.type === 'opaque')) c.put(req, r.clone()); return r; }).catch(() => null);
+    if (hit) { e.waitUntil(net); return hit; }
+    const r = await net;
+    return r || new Response('offline', {status: 503, headers: {'Content-Type': 'text/plain'}});
+  }));
+});
