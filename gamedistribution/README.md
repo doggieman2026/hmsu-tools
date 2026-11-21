@@ -20,9 +20,12 @@ GameDistribution（ゲームサイトにゲームを配って、広告収入を�
 - 「広告を見て続ける」：リワード広告（最後まで見たときだけ続行）
 - 広告中はゲームを止めて音を消す
 
-## ゲーム一覧（20本）
+## ゲーム一覧（23本）
 | zip | タイトル | ジャンル | 説明（日本語。英語は itch/README.md） | カバー |
 | --- | --- | --- | --- | --- |
+| hoop-flick.zip | Hoop Flick | スポーツ / Basketball | ボールを上にスワイプしてシュート！リングにふれずに入れるとスウィッシュでボーナス。外したらおしまい。 | itch/hoop-flick-cover.png |
+| cozy-sudoku.zip | Cozy Sudoku | パズル / Sudoku | 毎回ちがう問題が自動でできるナンプレ。かんたん・ふつう・むずかしいの3段階、メモとヒントつき。 | itch/cozy-sudoku-cover.png |
+| snaky-garden.zip | Snaky Garden | アクション / Snake | スワイプでヘビをあやつってリンゴをパクパク。金のリンゴは5点！しっぽにぶつからないように。 | itch/snaky-garden-cover.png |
 | cloud-hop.zip | Cloud Hop | アクション / Jumper | うさぎが雲をぴょんぴょん。指を左右に動かして、どこまで高く登れるか。くずれる雲とキノコの大ジャンプ！ | itch/cloud-hop-cover.png |
 | bubble-pop.zip | Bubble Pop | パズル / Bubble shooter | ねらって発射、同じ色を3つでパチン！ぶら下がったあわはまとめて落ちる。線まで来たら負け。 | itch/bubble-pop-cover.png |
 | tiny-putt.zip | Tiny Putt | スポーツ / Mini golf | 引っぱって打つミニゴルフ。かべで跳ね返し、風車や池をこえてカップへ。全9ホールでパーをめざそう！ | itch/tiny-putt-cover.png |

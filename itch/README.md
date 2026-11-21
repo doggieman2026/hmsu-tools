@@ -43,6 +43,9 @@
 | tiny-putt.zip | Tiny Putt | Drag-and-release mini golf — 9 holes with walls, sand, water, bumpers and windmills. | Sports / mini golf, casual | 480×800 |
 | bubble-pop.zip | Bubble Pop | Classic bubble shooter with smiley bubbles — match 3 to pop and drop the rest. | Puzzle / bubble shooter, casual | 480×800 |
 | cloud-hop.zip | Cloud Hop | A bouncy bunny climbs the clouds — slide to steer, dodge crumbling clouds, bounce on mushrooms. | Action / endless jumper | 480×800 |
+| snaky-garden.zip | Snaky Garden | Classic snake in a garden — swipe to steer, eat apples, grab golden apples, don't bite your tail. | Arcade / snake | 480×800 |
+| cozy-sudoku.zip | Cozy Sudoku | Endless freshly generated sudoku in 3 difficulties, with notes, hints and undo. | Puzzle / sudoku, logic | 480×800 |
+| hoop-flick.zip | Hoop Flick | Swipe to shoot hoops — swish for bonus points, the hoop starts moving as you score. | Sports / basketball, one-touch | 480×800 |
 | meiro-game.zip | Daily Maze | Five fresh mazes every day. How fast can you escape? | Puzzle / maze, daily | 480×800 |
 
 ※ AIを使って作ったことを書く欄（AI generation disclosure）があれば「Yes」にする。
