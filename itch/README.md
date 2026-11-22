@@ -43,6 +43,9 @@
 | tiny-putt.zip | Tiny Putt | Drag-and-release mini golf — 9 holes with walls, sand, water, bumpers and windmills. | Sports / mini golf, casual | 480×800 |
 | bubble-pop.zip | Bubble Pop | Classic bubble shooter with smiley bubbles — match 3 to pop and drop the rest. | Puzzle / bubble shooter, casual | 480×800 |
 | cloud-hop.zip | Cloud Hop | A bouncy bunny climbs the clouds — slide to steer, dodge crumbling clouds, bounce on mushrooms. | Action / endless jumper | 480×800 |
+| tiny-quest.zip | Tiny Quest | Mini dungeon RPG — explore floors, turn-based battles, level up, loot gear, beat a boss every 5 floors. | RPG / roguelike, turn-based | 480×800 |
+| ninja-dash.zip | Ninja Dash | Swipe to dash-slash through waves of oni — chain kills for combos, dodge shuriken. | Action / arcade | 480×800 |
+| drift-skyway.zip | Drift Skyway | Tap to drift around the corners of a zigzag road in the sky — don't fall off! | Action / one-tap racing | 480×800 |
 | snaky-garden.zip | Snaky Garden | Classic snake in a garden — swipe to steer, eat apples, grab golden apples, don't bite your tail. | Arcade / snake | 480×800 |
 | cozy-sudoku.zip | Cozy Sudoku | Endless freshly generated sudoku in 3 difficulties, with notes, hints and undo. | Puzzle / sudoku, logic | 480×800 |
 | hoop-flick.zip | Hoop Flick | Swipe to shoot hoops — swish for bonus points, the hoop starts moving as you score. | Sports / basketball, one-touch | 480×800 |

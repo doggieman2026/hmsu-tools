@@ -20,9 +20,12 @@ GameDistribution（ゲームサイトにゲームを配って、広告収入を�
 - 「広告を見て続ける」：リワード広告（最後まで見たときだけ続行）
 - 広告中はゲームを止めて音を消す
 
-## ゲーム一覧（23本）
+## ゲーム一覧（26本）
 | zip | タイトル | ジャンル | 説明（日本語。英語は itch/README.md） | カバー |
 | --- | --- | --- | --- | --- |
+| drift-skyway.zip | Drift Skyway | アクション / One-tap racing | 空の道を走る車。カーブでタップしてドリフト！道から落ちないように、どこまで行ける？ | itch/drift-skyway-cover.png |
+| ninja-dash.zip | Ninja Dash | アクション / Slash | スワイプした方向へシュッとダッシュ斬り！せまってくるオニをまとめて斬ってコンボ。手裏剣に注意。 | itch/ninja-dash-cover.png |
+| tiny-quest.zip | Tiny Quest | RPG / Dungeon | ダンジョンを進んでモンスターとコマンドバトル。レベルアップ、宝箱の装備、5階ごとのボス！ | itch/tiny-quest-cover.png |
 | hoop-flick.zip | Hoop Flick | スポーツ / Basketball | ボールを上にスワイプしてシュート！リングにふれずに入れるとスウィッシュでボーナス。外したらおしまい。 | itch/hoop-flick-cover.png |
 | cozy-sudoku.zip | Cozy Sudoku | パズル / Sudoku | 毎回ちがう問題が自動でできるナンプレ。かんたん・ふつう・むずかしいの3段階、メモとヒントつき。 | itch/cozy-sudoku-cover.png |
 | snaky-garden.zip | Snaky Garden | アクション / Snake | スワイプでヘビをあやつってリンゴをパクパク。金のリンゴは5点！しっぽにぶつからないように。 | itch/snaky-garden-cover.png |
