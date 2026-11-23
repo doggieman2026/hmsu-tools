@@ -1,4 +1,4 @@
-# itch.io アップロードのしかた（hmsu Games 13本）
+# itch.io アップロードのしかた（hmsu Games 36本）
 
 ## 最初の1回だけ
 1. https://itch.io/register で登録（メールとパスワード）。届いたメールのリンクを押して確認。
@@ -50,5 +50,8 @@
 | cozy-sudoku.zip | Cozy Sudoku | Endless freshly generated sudoku in 3 difficulties, with notes, hints and undo. | Puzzle / sudoku, logic | 480×800 |
 | hoop-flick.zip | Hoop Flick | Swipe to shoot hoops — swish for bonus points, the hoop starts moving as you score. | Sports / basketball, one-touch | 480×800 |
 | meiro-game.zip | Daily Maze | Five fresh mazes every day. How fast can you escape? | Puzzle / maze, daily | 480×800 |
+| deck-delve.zip | Deck Delve | A pocket dungeon deckbuilder: read the enemy's next move, play attack and block cards, and grow your deck to beat the boss on floor 10. | RPG / card game, deckbuilder, roguelike, turn-based | 480×800 |
+| arrow-hero.zip | Arrow Hero | Drag to move, stand still to auto-shoot arrows. Clear rooms, pick a skill every 2 rooms and face a boss every 5. | Action / shooter, roguelite, arena | 480×800 |
+| trick-steps.zip | Trick Steps | Just reach the flag… but floors fall, spikes pop up and the flag runs away. 8 sneaky levels with instant restarts. | Platformer / troll, hard, funny | 480×800 |
 
 ※ AIを使って作ったことを書く欄（AI generation disclosure）があれば「Yes」にする。

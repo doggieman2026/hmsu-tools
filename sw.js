@@ -1,11 +1,20 @@
 // 自動生成（tools/build-offline.py）。手で書きかえない。
-const CACHE = 'hmsu-3302f1c8bd';
+const CACHE = 'hmsu-3851dbcc35';
 const FILES = [
 "./games/",
 "./games/index.html",
 "./games/manifest.webmanifest",
 "./games/icon-192.png",
 "./games/icon-512.png",
+"./games/img/trick-steps.jpg",
+"./trick-steps/",
+"./trick-steps/index.html",
+"./games/img/arrow-hero.jpg",
+"./arrow-hero/",
+"./arrow-hero/index.html",
+"./games/img/deck-delve.jpg",
+"./deck-delve/",
+"./deck-delve/index.html",
 "./games/img/drift-skyway.jpg",
 "./drift-skyway/",
 "./drift-skyway/index.html",

@@ -20,9 +20,12 @@ GameDistribution（ゲームサイトにゲームを配って、広告収入を�
 - 「広告を見て続ける」：リワード広告（最後まで見たときだけ続行）
 - 広告中はゲームを止めて音を消す
 
-## ゲーム一覧（26本）
+## ゲーム一覧（29本）
 | zip | タイトル | ジャンル | 説明（日本語。英語は itch/README.md） | カバー |
 | --- | --- | --- | --- | --- |
+| trick-steps.zip | Trick Steps | アクション / Troll platformer | 旗まで行くだけ…なのに床が落ちる、トゲが出る、旗が逃げる！ステージにだまされながら全8面クリアを目指せ。 | itch/trick-steps-cover.png |
+| arrow-hero.zip | Arrow Hero | アクション / Arena shooter | ドラッグで動いて、止まると自動で矢を発射！部屋の敵を全部たおして次へ。2部屋ごとにスキル、5部屋ごとにボス。 | itch/arrow-hero-cover.png |
+| deck-delve.zip | Deck Delve | RPG / Card battle | カードで戦うダンジョンRPG。敵の次の行動を読んで攻撃とガードを組み立てよう。勝つたびにカードが増える。10階のボスをたおせ！ | itch/deck-delve-cover.png |
 | drift-skyway.zip | Drift Skyway | アクション / One-tap racing | 空の道を走る車。カーブでタップしてドリフト！道から落ちないように、どこまで行ける？ | itch/drift-skyway-cover.png |
 | ninja-dash.zip | Ninja Dash | アクション / Slash | スワイプした方向へシュッとダッシュ斬り！せまってくるオニをまとめて斬ってコンボ。手裏剣に注意。 | itch/ninja-dash-cover.png |
 | tiny-quest.zip | Tiny Quest | RPG / Dungeon | ダンジョンを進んでモンスターとコマンドバトル。レベルアップ、宝箱の装備、5階ごとのボス！ | itch/tiny-quest-cover.png |
