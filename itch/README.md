@@ -1,4 +1,4 @@
-# itch.io アップロードのしかた（hmsu Games 36本）
+# itch.io アップロードのしかた（hmsu Games 39本）
 
 ## 最初の1回だけ
 1. https://itch.io/register で登録（メールとパスワード）。届いたメールのリンクを押して確認。
@@ -53,5 +53,8 @@
 | deck-delve.zip | Deck Delve | A pocket dungeon deckbuilder: read the enemy's next move, play attack and block cards, and grow your deck to beat the boss on floor 10. | RPG / card game, deckbuilder, roguelike, turn-based | 480×800 |
 | arrow-hero.zip | Arrow Hero | Drag to move, stand still to auto-shoot arrows. Clear rooms, pick a skill every 2 rooms and face a boss every 5. | Action / shooter, roguelite, arena | 480×800 |
 | trick-steps.zip | Trick Steps | Just reach the flag… but floors fall, spikes pop up and the flag runs away. 8 sneaky levels with instant restarts. | Platformer / troll, hard, funny | 480×800 |
+| power-tower.zip | Power Tower | Tap a tower room to send your hero in. Beat weaker monsters to absorb their power — plan the order and empty the tower! | Puzzle RPG / tower, numbers, strategy, casual | 480×800 |
+| gulp-hole.zip | Gulp Hole | Move your hole around the city and swallow everything — cones, cars, houses, skyscrapers. Out-grow rival holes in 90 seconds. | Action / io, casual, arcade | 480×800 |
+| ink-turf.zip | Ink Turf | Draw lines out of your turf and loop back to paint everything inside. Cross a rival's line to knock them out! | Action / io, territory, arcade | 480×800 |
 
 ※ AIを使って作ったことを書く欄（AI generation disclosure）があれば「Yes」にする。

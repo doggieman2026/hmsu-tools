@@ -20,9 +20,12 @@ GameDistribution（ゲームサイトにゲームを配って、広告収入を�
 - 「広告を見て続ける」：リワード広告（最後まで見たときだけ続行）
 - 広告中はゲームを止めて音を消す
 
-## ゲーム一覧（29本）
+## ゲーム一覧（32本）
 | zip | タイトル | ジャンル | 説明（日本語。英語は itch/README.md） | カバー |
 | --- | --- | --- | --- | --- |
+| ink-turf.zip | Ink Turf | 陣取り / Territory | スワイプで線を引いて陣地を広げる陣取りゲーム。自分の陣地にもどると囲んだところが自分の色に。線をふまれたらアウト！ | itch/ink-turf-cover.png |
+| gulp-hole.zip | Gulp Hole | アクション / Swallow the city | 穴を動かして街のものをのみこもう。大きくなるほど車も家もビルものみこめる。90秒でライバルの穴より大きくなれ！ | itch/gulp-hole-cover.png |
+| power-tower.zip | Power Tower | RPG / Tower puzzle | 塔の部屋をタップして勇者を送りこむ。自分より弱い敵をたおすと強さを吸収！順番を考えて塔をからっぽにしよう。 | itch/power-tower-cover.png |
 | trick-steps.zip | Trick Steps | アクション / Troll platformer | 旗まで行くだけ…なのに床が落ちる、トゲが出る、旗が逃げる！ステージにだまされながら全8面クリアを目指せ。 | itch/trick-steps-cover.png |
 | arrow-hero.zip | Arrow Hero | アクション / Arena shooter | ドラッグで動いて、止まると自動で矢を発射！部屋の敵を全部たおして次へ。2部屋ごとにスキル、5部屋ごとにボス。 | itch/arrow-hero-cover.png |
 | deck-delve.zip | Deck Delve | RPG / Card battle | カードで戦うダンジョンRPG。敵の次の行動を読んで攻撃とガードを組み立てよう。勝つたびにカードが増える。10階のボスをたおせ！ | itch/deck-delve-cover.png |
