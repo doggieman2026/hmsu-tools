@@ -20,9 +20,12 @@ GameDistribution（ゲームサイトにゲームを配って、広告収入を�
 - 「広告を見て続ける」：リワード広告（最後まで見たときだけ続行）
 - 広告中はゲームを止めて音を消す
 
-## ゲーム一覧（32本）
+## ゲーム一覧（35本）
 | zip | タイトル | ジャンル | 説明（日本語。英語は itch/README.md） | カバー |
 | --- | --- | --- | --- | --- |
+| rail-rush.zip | Rail Rush | ランナー / Endless runner | 線路を走りぬけるエンドレスラン。スワイプでレーン移動・ジャンプ・スライディング。電車と柵をよけてコインを集めよう！ | itch/rail-rush-cover.png |
+| arrow-duel.zip | Arrow Duel | アクション / Archery duel | 引っぱってはなすと矢を発射！角度と強さを決めて相手をねらう弓の一騎打ち。頭に当てれば大ダメージ。何人勝ちぬける？ | itch/arrow-duel-cover.png |
+| tap-quest.zip | Tap Quest | RPG / Tap & idle | タップでモンスターをたおしてゴールドを集め、剣をきたえて仲間をやとう放置系RPG。10体ごとにボス戦。進みぐあいは自動保存。 | itch/tap-quest-cover.png |
 | ink-turf.zip | Ink Turf | 陣取り / Territory | スワイプで線を引いて陣地を広げる陣取りゲーム。自分の陣地にもどると囲んだところが自分の色に。線をふまれたらアウト！ | itch/ink-turf-cover.png |
 | gulp-hole.zip | Gulp Hole | アクション / Swallow the city | 穴を動かして街のものをのみこもう。大きくなるほど車も家もビルものみこめる。90秒でライバルの穴より大きくなれ！ | itch/gulp-hole-cover.png |
 | power-tower.zip | Power Tower | RPG / Tower puzzle | 塔の部屋をタップして勇者を送りこむ。自分より弱い敵をたおすと強さを吸収！順番を考えて塔をからっぽにしよう。 | itch/power-tower-cover.png |
