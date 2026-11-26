@@ -1,4 +1,4 @@
-# itch.io アップロードのしかた（hmsu Games 42本）
+# itch.io アップロードのしかた（hmsu Games 45本）
 
 ## 最初の1回だけ
 1. https://itch.io/register で登録（メールとパスワード）。届いたメールのリンクを押して確認。
@@ -59,5 +59,8 @@
 | tap-quest.zip | Tap Quest | Tap monsters for gold, sharpen your sword and hire helpers who fight for you. Boss every 10 monsters. Saves automatically. | RPG / idle, clicker, incremental | 480×800 |
 | arrow-duel.zip | Arrow Duel | Pull back and release to fire! Set angle and power, mind the wind, and land headshots to win duel after duel. | Action / archery, physics, shooting | 480×800 |
 | rail-rush.zip | Rail Rush | Endless rail runner: swipe to switch lanes, jump and slide past trains and barriers while grabbing coins. | Action / runner, endless, arcade | 480×800 |
+| dice-knight.zip | Dice Knight | Roll dice and slot them into your gear — some items only take ≤3, evens or a 6. Win fights, earn gear, beat the boss on floor 12. | RPG / dice, roguelike, turn-based | 480×800 |
+| fish-dive.zip | Fish Dive | Drop your hook deep while dodging fish, then snag everything on the way up. Upgrade line, hooks and bait. | Action / fishing, casual, upgrade | 480×800 |
+| hill-hopper.zip | Hill Hopper | Physics hill driving: gas, brake, flips in the air and fuel cans. How far can your little jeep go? | Driving / physics, hill climb, casual | 480×800 |
 
 ※ AIを使って作ったことを書く欄（AI generation disclosure）があれば「Yes」にする。

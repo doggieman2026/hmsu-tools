@@ -20,9 +20,12 @@ GameDistribution（ゲームサイトにゲームを配って、広告収入を�
 - 「広告を見て続ける」：リワード広告（最後まで見たときだけ続行）
 - 広告中はゲームを止めて音を消す
 
-## ゲーム一覧（35本）
+## ゲーム一覧（38本）
 | zip | タイトル | ジャンル | 説明（日本語。英語は itch/README.md） | カバー |
 | --- | --- | --- | --- | --- |
+| hill-hopper.zip | Hill Hopper | ドライブ / Hill climb | アクセルとブレーキで山道をどこまでも走る物理ドライブ。空中で回転して宙返りボーナス！頭から落ちたり燃料が切れたらおしまい。 | itch/hill-hopper-cover.png |
+| fish-dive.zip | Fish Dive | アクション / Fishing | 針を海の底へ落として、帰り道に魚を引っかける釣りゲーム。指で魚をよけて深く、帰りはたくさんつって糸と針を強化しよう。 | itch/fish-dive-cover.png |
+| dice-knight.zip | Dice Knight | RPG / Dice battle | さいころを振って装備にセットして戦うダンジョンRPG。3以下・偶数など装備ごとに使える目がちがう。12階のボスをたおせ！ | itch/dice-knight-cover.png |
 | rail-rush.zip | Rail Rush | ランナー / Endless runner | 線路を走りぬけるエンドレスラン。スワイプでレーン移動・ジャンプ・スライディング。電車と柵をよけてコインを集めよう！ | itch/rail-rush-cover.png |
 | arrow-duel.zip | Arrow Duel | アクション / Archery duel | 引っぱってはなすと矢を発射！角度と強さを決めて相手をねらう弓の一騎打ち。頭に当てれば大ダメージ。何人勝ちぬける？ | itch/arrow-duel-cover.png |
 | tap-quest.zip | Tap Quest | RPG / Tap & idle | タップでモンスターをたおしてゴールドを集め、剣をきたえて仲間をやとう放置系RPG。10体ごとにボス戦。進みぐあいは自動保存。 | itch/tap-quest-cover.png |
