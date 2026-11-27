@@ -1,4 +1,4 @@
-# itch.io アップロードのしかた（hmsu Games 46本）
+# itch.io アップロードのしかた（hmsu Games 49本）
 
 ## 最初の1回だけ
 1. https://itch.io/register で登録（メールとパスワード）。届いたメールのリンクを押して確認。
@@ -63,5 +63,8 @@
 | fish-dive.zip | Fish Dive | Drop your hook deep while dodging fish, then snag everything on the way up. Upgrade line, hooks and bait. | Action / fishing, casual, upgrade | 480×800 |
 | hill-hopper.zip | Hill Hopper | Physics hill driving: gas, brake, flips in the air and fuel cans. How far can your little jeep go? | Driving / physics, hill climb, casual | 480×800 |
 | bot-school.zip | Bot School | Raise real tiny neural-network AIs by evolution: watch 24 robots learn to run, pick your favorite each generation, and reach 1500m. | Simulation / AI, evolution, idle | 480×800 |
+| hero-swarm.zip | Hero Swarm | Move — attacks are automatic. Mow down the swarm, level up, combine skills and survive 5 minutes to face the boss. | Action RPG / survivor, roguelite, bullet heaven | 480×800 |
+| spike-bounce.zip | Spike Bounce | Tap to flap, bounce wall to wall and slip through the gaps as new spikes pop up. | Action / one-tap, arcade, hard | 480×800 |
+| goal-flick.zip | Goal Flick | Swipe to take free kicks — curve the ball around the wall and past the cat keeper. | Sports / soccer, swipe, casual | 480×800 |
 
 ※ AIを使って作ったことを書く欄（AI generation disclosure）があれば「Yes」にする。
