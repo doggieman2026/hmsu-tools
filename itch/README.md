@@ -1,4 +1,4 @@
-# itch.io アップロードのしかた（hmsu Games 45本）
+# itch.io アップロードのしかた（hmsu Games 46本）
 
 ## 最初の1回だけ
 1. https://itch.io/register で登録（メールとパスワード）。届いたメールのリンクを押して確認。
@@ -62,5 +62,6 @@
 | dice-knight.zip | Dice Knight | Roll dice and slot them into your gear — some items only take ≤3, evens or a 6. Win fights, earn gear, beat the boss on floor 12. | RPG / dice, roguelike, turn-based | 480×800 |
 | fish-dive.zip | Fish Dive | Drop your hook deep while dodging fish, then snag everything on the way up. Upgrade line, hooks and bait. | Action / fishing, casual, upgrade | 480×800 |
 | hill-hopper.zip | Hill Hopper | Physics hill driving: gas, brake, flips in the air and fuel cans. How far can your little jeep go? | Driving / physics, hill climb, casual | 480×800 |
+| bot-school.zip | Bot School | Raise real tiny neural-network AIs by evolution: watch 24 robots learn to run, pick your favorite each generation, and reach 1500m. | Simulation / AI, evolution, idle | 480×800 |
 
 ※ AIを使って作ったことを書く欄（AI generation disclosure）があれば「Yes」にする。

@@ -20,9 +20,10 @@ GameDistribution（ゲームサイトにゲームを配って、広告収入を�
 - 「広告を見て続ける」：リワード広告（最後まで見たときだけ続行）
 - 広告中はゲームを止めて音を消す
 
-## ゲーム一覧（38本）
+## ゲーム一覧（39本）
 | zip | タイトル | ジャンル | 説明（日本語。英語は itch/README.md） | カバー |
 | --- | --- | --- | --- | --- |
+| bot-school.zip | Bot School | 育成 / AI training | 本物のAI（ニューラルネット）を世代交代で育てるゲーム。最初は何もできないロボットが、推しをえらぶうちにだんだん走れるようになる。1500mを目指せ！ | itch/bot-school-cover.png |
 | hill-hopper.zip | Hill Hopper | ドライブ / Hill climb | アクセルとブレーキで山道をどこまでも走る物理ドライブ。空中で回転して宙返りボーナス！頭から落ちたり燃料が切れたらおしまい。 | itch/hill-hopper-cover.png |
 | fish-dive.zip | Fish Dive | アクション / Fishing | 針を海の底へ落として、帰り道に魚を引っかける釣りゲーム。指で魚をよけて深く、帰りはたくさんつって糸と針を強化しよう。 | itch/fish-dive-cover.png |
 | dice-knight.zip | Dice Knight | RPG / Dice battle | さいころを振って装備にセットして戦うダンジョンRPG。3以下・偶数など装備ごとに使える目がちがう。12階のボスをたおせ！ | itch/dice-knight-cover.png |
