@@ -50,14 +50,14 @@ html,body{margin:0;height:100%;background:#1a1d2e;color:#fff;font-family:"Rubik"
 </head>
 <body>
 <div id="app">
- <div id="top"><span>🏢 <span id="rank"></span></span><button id="gbtn" type="button"></button><button id="mybtn" type="button"></button><span id="stars">⭐ 0</span></div>
+ <div id="top"><span>🏢 <span id="rank"></span></span><button id="gbtn" type="button"></button><button id="mybtn" type="button"></button><button id="hira" type="button" style="font:inherit;font-size:12px;font-weight:900;border:2px solid #ff9ad8;color:#ff9ad8;background:transparent;border-radius:12px;padding:4px 8px;cursor:pointer">あ</button><span id="stars">⭐ 0</span></div>
  <div id="mission"></div>
  <div id="stage"><canvas id="cv"></canvas></div>
  <div id="chat"></div>
  <div id="chips"></div>
  <div id="bar"><input id="inp" autocomplete="off"><button class="btn2" id="send" type="button"></button><button class="btn2" id="test" type="button"></button></div>
 </div>
-<div class="over" id="title"><h1>AI GAME<small>STUDIO</small></h1><p id="howto"></p><button class="btn" id="play" type="button">PLAY</button></div>
+<div class="over" id="title"><h1>AI GAME<small>STUDIO</small></h1><p id="howto"></p><button class="btn" id="play" type="button">PLAY</button><button class="btn sub" id="hiraT" type="button"></button></div>
 <div class="over" id="genre" hidden><h2 id="gt"></h2><div id="glist"></div></div>
 <div class="over" id="my" hidden><h2 id="myT"></h2><div id="glist2"></div><button class="btn sub" id="saveBtn" type="button"></button><button class="btn" id="myClose" type="button"></button></div>
 <div class="over" id="shared" hidden><h1 style="font-size:clamp(34px,10vw,56px)" id="shT"></h1><p id="shP"></p><button class="btn" id="shPlay" type="button"></button><button class="btn sub" id="shStudio" type="button"></button></div>
@@ -72,6 +72,14 @@ var TX={how:L('あなたはゲーム会社の新人プログラマー。<b>ゲ�
  win:L('クリア！','CLEAR!'),lose:L('ゲームオーバー','GAME OVER'),allDone:L('全部の注文をクリア！','All orders shipped!'),allP:L('あなたはもう一人前のAIゲームクリエイター。フリーモードで好きなゲームを作ろう。','You\'re a real AI game creator now. Build anything in Free Mode.'),free:L('フリーモード','Free Mode'),
  unk:L('ごめん、よくわからなかった…。下のボタンにあることばを使ってみて！','Sorry, I didn\'t get that… Try the words on the buttons below!'),reqMet:L('注文チェック：','Order check: '),client:L('お客さん','Client'),done:L('できたら ▶テスト でクリアしてね！','Looks good — hit ▶ Test and clear it!'),
  pickG:L('ゲームの種類をえらぼう','Choose a game type'),change:L('🎮 種類','🎮 Type'),hello:L('やあ！ぼくはコディ。','Hi! I\'m Cody.'),wrongG:L('この注文は「{g}」で作ってね。上の🎮ボタンで変えられるよ。','This order needs a {g}. Switch with the 🎮 button above.')};
+
+// ===== hiragana mode (for kids) =====
+var HIRA=(function(){try{return localStorage.getItem('ags2-hira')==='1';}catch(e){return false;}})();
+var KPH=[['上の','うえの'],['上げ','あげ'],['入る','はいる'],['出る','でる'],['出口','でぐち'],['出現','しゅつげん'],['今回','こんかい'],['今の','いまの'],['生き','いき'],['空中','くうちゅう'],['見習','みなら'],['足場','あしば'],['足す','たす'],['足し','たし']];
+var KDIC={'想像以上':'そうぞういじょう','一人前':'いちにんまえ','主人公':'しゅじんこう','体以上':'たいいじょう','宇宙船':'うちゅうせん','二段':'にだん','以上':'いじょう','会社':'かいしゃ','伝説':'でんせつ','体出':'たいだ','保存':'ほぞん','全部':'ぜんぶ','友達':'ともだち','回当':'かいあ','増加':'ぞうか','大群':'たいぐん','宇宙':'うちゅう','宝箱':'たからばこ','指示':'しじ','新人':'しんじん','方向':'ほうこう','暗闇':'くらやみ','最初':'さいしょ','最後':'さいご','最高':'さいこう','枚置':'まいお','残機':'ざんき','注文':'ちゅうもん','無敵':'むてき','発射':'はっしゃ','目指':'めざ','相棒':'あいぼう','秒生':'びょうい','種類':'しゅるい','空飛':'そらと','簡単':'かんたん','納品':'のうひん','編集':'へんしゅう','自分':'じぶん','自動':'じどう','菓子':'かし','距離':'きょり','迷路':'めいろ','送信':'そうしん','隕石':'いんせき',
+ '上':'うえ','下':'した','今':'いま','体':'たい','作':'つく','使':'つか','個':'こ','入':'い','出':'だ','切':'き','動':'うご','取':'と','台':'だい','回':'かい','固':'かた','国':'くに','増':'ふ','変':'か','夜':'よる','大':'おお','好':'す','守':'まも','宝':'たから','客':'きゃく','崩':'くず','床':'ゆか','弾':'たま','撃':'う','敵':'てき','旗':'はた','暗':'くら','書':'か','本':'ほん','枚':'まい','森':'もり','次':'つぎ','段':'だん','海':'うみ','消':'け','猫':'ねこ','生':'い','直':'なお','秒':'びょう','空':'そら','罠':'わな','置':'お','街':'まち','見':'み','走':'はし','足':'た','跳':'は','追':'お','送':'おく','速':'はや','遅':'おそ','遊':'あそ','鍵':'かぎ','開':'あ','集':'あつ','難':'むずか','飛':'と','高':'たか','一':'いち','二':'に','三':'さん','四':'よん','五':'ご','六':'ろく','七':'なな','八':'はち','九':'きゅう','十':'じゅう'};
+function kana(str){if(typeof str!=='string'||!/[一-鿿]/.test(str))return str;KPH.forEach(function(p){str=str.split(p[0]).join(p[1]);});return str.replace(/[一-鿿々]+/g,function(run){if(KDIC[run])return KDIC[run];var out='',i=0;while(i<run.length){var hit=false;for(var l=Math.min(4,run.length-i);l>0;l--){var sub=run.substr(i,l);if(KDIC[sub]){out+=KDIC[sub];i+=l;hit=true;break;}}if(!hit){out+=run[i];i++;}}return out;});}
+function norm(s){return String(s).toLowerCase().replace(/[ァ-ヶ]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0x60);}).replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0xFEE0);}).replace(/ー/g,'ー');}
 var $=function(i){return document.getElementById(i);};
 $('howto').innerHTML=TX.how;$('play').textContent=TX.play;$('send').textContent=TX.send;$('test').textContent=TX.test;$('inp').placeholder=TX.ph;$('again').textContent=TX.next;$('gbtn').textContent=TX.change;$('gt').textContent=TX.pickG;
 var store={get:function(k,f){try{var v=localStorage.getItem('ags2-'+k);return v==null?f:JSON.parse(v);}catch(e){return f;}},set:function(k,v){try{localStorage.setItem('ags2-'+k,JSON.stringify(v));}catch(e){}}};
@@ -107,8 +115,8 @@ function reqLabel(r){var k=r[0],v=r[1],p=r[2]?'+':'';var n={coin:spec.genre==='m
   return {goal:L('ゴール/出口','goal/exit'),key:L('鍵とドア','key & door'),boss:L('ボス','boss'),power:L('パワーアップ','power-ups'),shield:L('バリア','shields'),dark:L('まっくら','darkness'),hard:L('かたいブロック','hard bricks'),multi:L('ボール増加','multi-ball'),dbl:L('2段ジャンプ','double jump'),timer:v+L('秒生きのこる','s survival'),dist:v+L('m走る','m run'),speed:L('速い','fast'),lives:L('ライフ','lives')+v}[k]||k;}
 // ===== Cody's language rules =====
 var KAN={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
-function numNear(s,words,def){var best=null,bd=99;words.forEach(function(w){var i=s.indexOf(w);if(i<0)return;var re=/(\d+)|([一二三四五六七八九十])/g,m;while((m=re.exec(s))){var pos=m.index,d=pos>=i?Math.max(0,pos-(i+w.length)):i-(pos+m[0].length)+0.5;if(d<bd&&d<8){bd=d;best=m[1]?parseInt(m[1],10):KAN[m[2]];}}});return best==null?def:best;}
-function has(s,a){return a.some(function(w){return s.indexOf(w)>=0;});}
+function numNear(s,words,def){s=norm(s);var best=null,bd=99;var ws=[];words.forEach(function(w){ws.push(norm(w));ws.push(norm(kana(w)));});ws.forEach(function(w){var i=s.indexOf(w);if(i<0)return;var re=/(\d+)|([一二三四五六七八九十])/g,m;while((m=re.exec(s))){var pos=m.index,d=pos>=i?Math.max(0,pos-(i+w.length)):i-(pos+m[0].length)+0.5;if(d<bd&&d<8){bd=d;best=m[1]?parseInt(m[1],10):KAN[m[2]];}}});return best==null?def:best;}
+function has(s,a){var n=norm(s);return a.some(function(w){return n.indexOf(norm(w))>=0||n.indexOf(norm(kana(w)))>=0;});}
 // rule: [genres or null, keywords, fn(s) -> [message, code] or null]
 var RULES=[
  [null,['アクションにして','アクションゲーム','platformer'],function(){setGenre('act');return [L('アクションゲームにしたよ','Switched to a platformer'),'game = new Platformer();'];}],
@@ -401,7 +409,16 @@ function render(){var sk=shakeT>0?(Math.random()-0.5)*shakeT*30:0;g.setTransform
   else{g.fillStyle='rgba(0,0,0,.38)';rr(6,6,Math.min(W-12,240),22,11);g.fill();g.fillStyle='#fff';g.font="800 11px Rubik,'M PLUS Rounded 1c'";g.textAlign='left';g.fillText(GEN[spec.genre].i+' '+GEN[spec.genre].name+L('（▶テストで遊ぶ）',' (▶ Test to play)'),14,21);}
   drawMsg();}
 function drawMsg(){if(msgT>0){g.textAlign='center';g.font="900 32px Rubik,'M PLUS Rounded 1c'";g.lineWidth=6;g.strokeStyle='rgba(0,0,0,.5)';g.strokeText(msgTxt,W/2,H*0.45);g.fillStyle=msgTxt===TX.win?'#ffd84a':msgTxt===TX.lose?'#ff8a8a':'#fff';g.fillText(msgTxt,W/2,H*0.45);}}
+
+// hiragana: canvas + DOM
+(function(){var f0=g.fillText,s0=g.strokeText,m0=g.measureText;g.fillText=function(t2,x,y,mw){return mw===undefined?f0.call(g,HIRA?kana(t2):t2,x,y):f0.call(g,HIRA?kana(t2):t2,x,y,mw);};g.strokeText=function(t2,x,y,mw){return mw===undefined?s0.call(g,HIRA?kana(t2):t2,x,y):s0.call(g,HIRA?kana(t2):t2,x,y,mw);};g.measureText=function(t2){return m0.call(g,HIRA?kana(t2):t2);};})();
+var ORIG=new WeakMap();
+function convNode(n){if(n.nodeType===3){var o=ORIG.has(n)?ORIG.get(n):n.nodeValue;var want=HIRA&&JA?kana(o):o;if(!ORIG.has(n)||(n.nodeValue!==want&&n.nodeValue!==kana(o)&&n.nodeValue!==o)){o=n.nodeValue;ORIG.set(n,o);want=HIRA&&JA?kana(o):o;}if(n.nodeValue!==want)n.nodeValue=want;return;}if(n.nodeType===1){if(n.tagName==='SCRIPT'||n.tagName==='STYLE')return;if(n.placeholder!==undefined&&n.getAttribute){var ph=n.getAttribute('data-ph')||n.getAttribute('placeholder');if(ph){n.setAttribute('data-ph',ph);n.placeholder=HIRA&&JA?kana(ph):ph;}}for(var c=n.firstChild;c;c=c.nextSibling)convNode(c);}}
+var MO=new MutationObserver(function(list){list.forEach(function(m){if(m.type==='characterData')convNode(m.target);else m.addedNodes.forEach(convNode);});});
+MO.observe(document.body,{childList:true,subtree:true,characterData:true});
+function setHira(on){HIRA=on;try{localStorage.setItem('ags2-hira',on?'1':'0');}catch(e){}convNode(document.body);$('hira').textContent=on?'あ ✓':'あ';$('hiraT').textContent=on?'ひらがなモード：オン':'ひらがなモード：オフ';}
 var last=performance.now();function frame(now){var dt=Math.min(0.05,(now-last)/1000);last=now;update(dt);render();cgSync();requestAnimationFrame(frame);}
+$('hira').onclick=function(){setHira(!HIRA);};$('hiraT').onclick=function(){setHira(!HIRA);};if(!JA){$('hira').hidden=true;$('hiraT').hidden=true;}setHira(HIRA);
 fit();requestAnimationFrame(frame);
 </script>
 </body>

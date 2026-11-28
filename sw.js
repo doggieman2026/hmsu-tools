@@ -1,5 +1,5 @@
 // 自動生成（tools/build-offline.py）。手で書きかえない。
-const CACHE = 'hmsu-2464713234';
+const CACHE = 'hmsu-902b1bc278';
 const FILES = [
 "./games/",
 "./games/index.html",
