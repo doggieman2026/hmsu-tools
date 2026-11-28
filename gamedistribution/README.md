@@ -23,7 +23,7 @@ GameDistribution（ゲームサイトにゲームを配って、広告収入を�
 ## ゲーム一覧（43本）
 | zip | タイトル | ジャンル | 説明（日本語。英語は itch/README.md） | カバー |
 | --- | --- | --- | --- | --- |
-| ai-game-studio.zip | AI Game Studio | プログラミング / AI | 相棒AI「コディ」にことばで指示すると、プログラムを書いてゲームを作ってくれる。お客さんの注文どおりのゲームを作って、テストプレイでクリアしたら納品！ | itch/ai-game-studio-cover.png |
+| ai-game-studio.zip | AI Game Studio | プログラミング / AI | ゲームの種類（アクション・シューティング・迷路・ランナー・ブロックくずし）をえらんで、相棒AI「コディ」にことばで指示。バネ、ボス、鍵、おばけなどを組み合わせて、お客さんの注文どおりに作ろう！ | itch/ai-game-studio-cover.png |
 | goal-flick.zip | Goal Flick | サッカー / Free kick | スワイプでフリーキック！曲げてスワイプすると曲がるシュート。ネコのキーパーと壁をかわしてゴールを決めよう。 | itch/goal-flick-cover.png |
 | spike-bounce.zip | Spike Bounce | アクション / One-tap | タップではばたいて、かべにタッチで1点。反対のかべにトゲが出るから、すきまをねらって飛ぼう！ | itch/spike-bounce-cover.png |
 | hero-swarm.zip | Hero Swarm | アクションRPG / Survivor | 動くだけでこうげきは自動。おしよせる敵をたおしてレベルアップ、スキルを組み合わせて5分間生きのびろ！ | itch/hero-swarm-cover.png |
