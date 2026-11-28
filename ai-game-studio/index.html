@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>AI Game Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,700;0,900;1,900&family=M+PLUS+Rounded+1c:wght@800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#1a1d2e;color:#fff;font-family:"Rubik","M PLUS Rounded 1c",system-ui,sans-serif;overflow:hidden}
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+#top{flex:0 0 auto;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;font-weight:900;font-size:14px;background:#242840}
+#mission{flex:0 0 auto;padding:8px 12px;background:#2e3354;font-size:13px;line-height:1.5}
+#mission b{color:#ffd84a}
+#stage{position:relative;flex:0 0 auto;height:42vh;background:#000}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#chat{flex:1 1 auto;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.msg{max-width:85%;padding:8px 11px;border-radius:14px;line-height:1.45;white-space:pre-wrap}
+.me{align-self:flex-end;background:#3a7ae0;border-bottom-right-radius:4px}
+.ai{align-self:flex-start;background:#2e3354;border-bottom-left-radius:4px}
+.code{align-self:flex-start;font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#0e1020;color:#7ae0a0;padding:8px 11px;border-radius:10px;border-left:3px solid #7ae0a0;max-width:92%;white-space:pre-wrap}
+#chips{flex:0 0 auto;display:flex;gap:6px;overflow-x:auto;padding:6px 10px;background:#20243a}
+.chip{flex:0 0 auto;font:inherit;font-size:13px;font-weight:800;border:2px solid #5a6aa8;background:#2e3354;color:#fff;border-radius:16px;padding:6px 11px;cursor:pointer}
+#bar{flex:0 0 auto;display:flex;gap:6px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:#20243a}
+#inp{flex:1;font:inherit;font-size:15px;padding:10px 12px;border-radius:12px;border:2px solid #5a6aa8;background:#14172a;color:#fff;min-width:0}
+.btn2{font:inherit;font-weight:900;font-size:15px;border:none;border-radius:12px;padding:10px 14px;color:#fff;cursor:pointer}
+#send{background:#3a7ae0}#test{background:#2aa03a}
+.over{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(15,15,30,.85);text-align:center;padding:24px;z-index:5}
+.over[hidden]{display:none}
+.over h1{margin:0;font-size:clamp(46px,13vw,80px);line-height:.95;font-weight:900;font-style:italic;color:#7ae0ff;text-shadow:0 5px 0 #1a4a8a}
+.over h1 small{display:block;font-size:.62em;color:#ffd84a;text-shadow:0 4px 0 #8a5010}
+.over p{margin:0;max-width:360px;line-height:1.6;font-size:15px}
+.btn{font:inherit;font-weight:900;font-size:22px;border:3px solid #fff;border-radius:18px;padding:13px 36px;background:linear-gradient(#5ad8ff,#2a7ae0);color:#fff;box-shadow:0 6px 0 #1a3a8a;cursor:pointer;min-width:230px}
+.btn.sub{font-size:17px;background:linear-gradient(#ffd84a,#ff9a2a);box-shadow:0 5px 0 #9a5010}
+</style>
+</head>
+<body>
+<div id="app">
+ <div id="top"><span id="studio">🏢 AI Game Studio</span><span id="stars">⭐ 0</span></div>
+ <div id="mission"></div>
+ <div id="stage"><canvas id="cv"></canvas></div>
+ <div id="chat"></div>
+ <div id="chips"></div>
+ <div id="bar"><input id="inp" autocomplete="off"><button class="btn2" id="send" type="button"></button><button class="btn2" id="test" type="button"></button></div>
+</div>
+<div class="over" id="title"><h1>AI GAME<small>STUDIO</small></h1><p id="howto"></p><button class="btn" id="play" type="button">PLAY</button></div>
+<div class="over" id="end" hidden><h1 id="endT" style="font-size:clamp(36px,10vw,60px)"></h1><p id="endP"></p><button class="btn sub" id="cont" type="button" hidden></button><button class="btn" id="again" type="button"></button></div>
+<script>
+"use strict";
+var JA=(navigator.language||'').slice(0,2)==='ja';
+var TX=JA?{how:'あなたはゲーム会社の新人プログラマー。相棒のAI「コディ」に<b>ことばで指示</b>すると、プログラムを書いてゲームを作ってくれるよ。<br>お客さんの注文どおりのゲームを作って、自分でテストプレイしてクリアできたら納品！',play:'スタジオに入る',send:'送信',test:'▶ テスト',stop:'■ 編集',ph:'コディに指示しよう（例：ジャンプできるようにして）',stars:'⭐',ok:'納品OK！',okP:'お客さんの注文どおりのゲームができた！',next:'次の注文へ',miss:'注文とちがうところがあるみたい：',win:'クリア！',lose:'ゲームオーバー',retry:'もう一度テスト',allDone:'全部の注文をクリア！',allP:'あなたはもう一人前のAIゲームクリエイター。ここからはフリーモードで自由に作ろう。',free:'フリーモード',hello:'やあ！ぼくはコディ。どんなゲームを作る？ 下のボタンか、ことばで指示してね。',unk:'ごめん、よくわからなかった…。「ジャンプ」「コイン10枚」「敵を速く」「宇宙」みたいに言ってみて！',reqMet:'注文チェック：',client:'お客さん',done:'できあがったら ▶テスト でクリアしてね！'}
+ :{how:'You\'re a rookie programmer at a game studio. <b>Tell your AI partner "Cody" what you want in plain words</b> and Cody writes the code and builds the game.<br>Build what each client orders, then playtest and clear it yourself to ship it!',play:'ENTER STUDIO',send:'Send',test:'▶ Test',stop:'■ Edit',ph:'Tell Cody what to build (e.g. "let the player jump")',stars:'⭐',ok:'Shipped!',okP:'The game matches the client\'s order!',next:'Next order',miss:'Something doesn\'t match the order yet:',win:'CLEAR!',lose:'GAME OVER',retry:'Test again',allDone:'All orders shipped!',allP:'You\'re a real AI game creator now. Keep building freely in Free Mode.',free:'Free Mode',hello:'Hi! I\'m Cody. What shall we build? Tap a button below or just tell me.',unk:'Sorry, I didn\'t get that… Try "jump", "10 coins", "faster enemies" or "space".',reqMet:'Order check: ',client:'Client',done:'When it looks right, hit ▶ Test and clear it!'};
+var $=function(i){return document.getElementById(i);};
+$('howto').innerHTML=TX.how;$('play').textContent=TX.play;$('send').textContent=TX.send;$('test').textContent=TX.test;$('inp').placeholder=TX.ph;$('again').textContent=TX.next;
+var store={get:function(k,f){try{var v=localStorage.getItem('ags-'+k);return v==null?f:JSON.parse(v);}catch(e){return f;}},set:function(k,v){try{localStorage.setItem('ags-'+k,JSON.stringify(v));}catch(e){}}};
+var SV=store.get('sv',{m:0,stars:0});
+// ---------- game spec (what Cody builds) ----------
+function blank(){return {mode:'none',theme:'grid',coins:0,enemies:0,eSpeed:1,flyers:0,spikes:0,goal:false,timer:0,lives:1,gravity:true,hero:'cube',dash:false};}
+var spec=blank();
+// missions: req = list of checks
+var M=[
+ {ja:'「ぴょんぴょん跳ねる、かんたんなゲームがほしいな」',en:'"I want a simple game where you jump around."',req:[['mode','plat'],['goal',true]],chips:{ja:['ジャンプできるようにして','ゴールの旗を置いて'],en:['Let the player jump','Add a goal flag']}},
+ {ja:'「森の中でコインを5枚集めるゲームを作って！」',en:'"Make a forest game where you collect 5 coins!"',req:[['mode','plat'],['theme','forest'],['coins',5]],chips:{ja:['ジャンプできるようにして','森のステージにして','コインを5枚置いて'],en:['Let the player jump','Make it a forest','Put 5 coins']}},
+ {ja:'「敵をよけてゴールする、ドキドキするやつ」',en:'"Dodge enemies and reach the goal — something thrilling."',req:[['mode','plat'],['enemies',3,'>='],['goal',true]],chips:{ja:['ジャンプできるようにして','敵を3体出して','ゴールを置いて'],en:['Let the player jump','Add 3 enemies','Add a goal']}},
+ {ja:'「宇宙で、上下左右に動いて星（コイン）を8個あつめたい」',en:'"In space, move in all four directions and collect 8 stars (coins)."',req:[['mode','top'],['theme','space'],['coins',8]],chips:{ja:['上下左右に動けるようにして','宇宙にして','コインを8枚'],en:['Move in 4 directions','Make it space','8 coins']}},
+ {ja:'「30秒生きのこるゲーム。敵は速めで！」',en:'"A 30-second survival game. Make the enemies fast!"',req:[['timer',30],['enemies',4,'>='],['eSpeed',1.5,'>=']],chips:{ja:['上下左右に動けるようにして','30秒生きのこったらクリア','敵を5体','敵を速くして'],en:['Move in 4 directions','Survive 30 seconds to win','5 enemies','Faster enemies']}},
+ {ja:'「海のステージで、トゲと空とぶ敵がいるアクション」',en:'"An ocean stage action game with spikes and flying enemies."',req:[['mode','plat'],['theme','sea'],['spikes',2,'>='],['flyers',2,'>='],['goal',true]],chips:{ja:['ジャンプできるようにして','海にして','トゲを3つ','空とぶ敵を2体','ゴールを置いて'],en:['Let the player jump','Make it the sea','3 spikes','2 flying enemies','Add a goal']}},
+ {ja:'「ネコが主人公で、ライフ3つ。コイン10枚とゴール両方」',en:'"A cat hero with 3 lives. Both 10 coins and a goal."',req:[['hero','cat'],['lives',3],['coins',10],['goal',true]],chips:{ja:['主人公をネコにして','ライフを3つ','コインを10枚','ゴールを置いて','ジャンプできるようにして'],en:['Make the hero a cat','3 lives','10 coins','Add a goal','Let the player jump']}},
+ {ja:'「最後の注文：あなたの好きなように、敵5体以上・コイン10枚以上のゲーム！」',en:'"Final order: your own game with 5+ enemies and 10+ coins!"',req:[['enemies',5,'>='],['coins',10,'>=']],chips:{ja:['ジャンプできるようにして','敵を5体','コインを12枚','ダッシュできるようにして','夜の街にして','ゴールを置いて'],en:['Let the player jump','5 enemies','12 coins','Add a dash','Make it a night city','Add a goal']}}];
+var mi=Math.min(SV.m,M.length);
+function checkReq(m){var bad=[];m.req.forEach(function(r){var k=r[0],v=r[1],op=r[2],s=spec[k],ok=op==='>='?s>=v:s===v;if(k==='coins'&&!op)ok=s===v;if(!ok)bad.push(r);});return bad;}
+function reqLabel(r){var k=r[0],v=r[1],ja={mode:{plat:'ジャンプするアクション',top:'上下左右に動く'},theme:{forest:'森',space:'宇宙',sea:'海',city:'夜の街'},hero:{cat:'ネコの主人公'}},en={mode:{plat:'jumping platformer',top:'4-direction movement'},theme:{forest:'forest',space:'space',sea:'sea',city:'night city'},hero:{cat:'cat hero'}};
+  if(k==='mode'||k==='theme'||k==='hero')return (JA?ja:en)[k][v];if(k==='goal')return JA?'ゴールの旗':'goal flag';if(k==='coins')return (JA?'コイン':'coins ')+(r[2]?v+'+':v)+(JA?'枚':'');if(k==='enemies')return (JA?'敵':'enemies ')+v+(r[2]?'+':'')+(JA?'体':'');if(k==='flyers')return (JA?'空とぶ敵':'flyers ')+v+'+';if(k==='spikes')return (JA?'トゲ':'spikes ')+v+'+';if(k==='timer')return v+(JA?'秒生きのこる':'s survival');if(k==='eSpeed')return JA?'速い敵':'fast enemies';if(k==='lives')return (JA?'ライフ':'lives ')+v;return k;}
+// ---------- Cody: tiny rule-based language parser ----------
+function num(s,def){var m=s.match(/(\d+)/);if(m)return parseInt(m[1],10);var kan={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};for(var k in kan)if(s.indexOf(k)>=0)return kan[k];return def;}
+function numNear(s,words,def){var best=null,bd=99;words.forEach(function(w){var i=s.indexOf(w);if(i<0)return;var re=/(\d+)|([一二三四五六七八九十])/g,m;while((m=re.exec(s))){var pos=m.index,d=pos>=i?pos-(i+w.length):i-(pos+m[0].length);if(pos>=i)d=Math.max(0,d);else d=d+0.5;if(d<bd&&d<8){bd=d;best=m[1]?parseInt(m[1],10):{'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10}[m[2]];}}});return best==null?def:best;}
+function has(s,arr){return arr.some(function(w){return s.indexOf(w)>=0;});}
+function cody(raw){var s=raw.toLowerCase(),acts=[],code=[];
+  if(has(s,['ジャンプ','跳','とべ','jump','platform'])){spec.mode='plat';spec.gravity=true;acts.push(JA?'ジャンプできるようにしたよ':'Player can jump now');code.push('player.gravity = true;\nplayer.onTap(() => player.jump(12));');}
+  if(has(s,['上下左右','4方向','四方向','見下ろし','four','4 dir','all direction','top-down','topdown'])){spec.mode='top';spec.gravity=false;acts.push(JA?'上下左右に動けるようにしたよ':'Player moves in 4 directions');code.push('player.gravity = false;\nplayer.move = joystick.dir;');}
+  if(has(s,['重力なし','無重力','no gravity','zero g'])){spec.gravity=false;if(spec.mode==='plat')spec.mode='top';acts.push(JA?'重力をなくしたよ':'Gravity off');code.push('world.gravity = 0;');}
+  if(has(s,['コイン','星','coin','star'])&&!has(s,['なし','消して','remove','no coin'])){var n=numNear(s,['コイン','星','coin','star'],5);spec.coins=Math.min(20,n);acts.push((JA?'コインを':'Placed ')+spec.coins+(JA?'枚置いたよ':' coins'));code.push('for (let i = 0; i < '+spec.coins+'; i++) spawn(Coin);');}
+  if(has(s,['空とぶ','空飛ぶ','飛ぶ敵','コウモリ','fly','flying','bird'])){var n2=numNear(s,['空とぶ','空飛ぶ','飛ぶ敵','コウモリ','fly','bird'],2);spec.flyers=Math.min(6,n2);acts.push((JA?'空とぶ敵を':'Added ')+spec.flyers+(JA?'体にしたよ':' flying enemies'));code.push('spawn(Flyer, '+spec.flyers+');');}
+  else if(has(s,['敵','モンスター','enem','monster'])&&!has(s,['速','おそ','遅','fast','slow'])){var n3=numNear(s,['敵','モンスター','enem','monster'],3);spec.enemies=Math.min(10,n3);acts.push((JA?'敵を':'Added ')+spec.enemies+(JA?'体出したよ':' enemies'));code.push('spawn(Walker, '+spec.enemies+');');}
+  if(has(s,['速く','はやく','速い','fast','quick'])){spec.eSpeed=Math.min(2.5,spec.eSpeed+0.6);if(!spec.enemies)spec.enemies=3;acts.push(JA?'敵のスピードを上げたよ':'Enemies are faster');code.push('Walker.speed *= 1.6;');}
+  if(has(s,['おそく','遅く','ゆっくり','slow'])){spec.eSpeed=Math.max(0.5,spec.eSpeed-0.4);acts.push(JA?'敵をゆっくりにしたよ':'Enemies slowed down');code.push('Walker.speed *= 0.6;');}
+  if(has(s,['トゲ','とげ','針','spike'])){var n4=numNear(s,['トゲ','とげ','針','spike'],3);spec.spikes=Math.min(8,n4);acts.push((JA?'トゲを':'Added ')+spec.spikes+(JA?'つ置いたよ':' spikes'));code.push('spawn(Spike, '+spec.spikes+');');}
+  if(has(s,['ゴール','旗','goal','flag','finish'])){spec.goal=true;acts.push(JA?'ゴールの旗を置いたよ':'Goal flag placed');code.push('world.add(GoalFlag, { x: world.end });');}
+  if(has(s,['秒','second','sec','survive','生き'])){var n5=numNear(s,['秒','second','sec'],30);spec.timer=Math.min(120,n5);acts.push(n5+(JA?'秒生きのこったらクリアにしたよ':'s survival = win'));code.push('rules.winAfter('+spec.timer+');');}
+  if(has(s,['ライフ','残機','life','lives','hp'])){var n6=numNear(s,['ライフ','残機','life','lives','hp'],3);spec.lives=Math.min(9,Math.max(1,n6));acts.push((JA?'ライフを':'Lives set to ')+spec.lives+(JA?'つにしたよ':''));code.push('player.lives = '+spec.lives+';');}
+  if(has(s,['ダッシュ','dash'])){spec.dash=true;acts.push(JA?'ダッシュボタンをつけたよ':'Dash button added');code.push('player.onButton("B", () => player.dash(3));');}
+  [['森','forest',['森','forest','jungle']],['宇宙','space',['宇宙','space','星空']],['海','sea',['海','sea','ocean','水中']],['夜の街','city',['夜','街','city','night']]].forEach(function(t){if(has(s,t[2])&&!(t[1]==='space'&&has(s,['星を','star'])&&!has(s,['宇宙','space']))){spec.theme=t[1];acts.push((JA?t[0]+'のステージにしたよ':'Theme: '+t[1]));code.push('world.theme = "'+t[1]+'";');}});
+  [['ネコ','cat',['ネコ','猫','ねこ','cat']],['ロボ','robot',['ロボ','robot']],['スライム','slime',['スライム','slime']]].forEach(function(h){if(has(s,h[2])){spec.hero=h[1];acts.push((JA?'主人公を'+h[0]+'にしたよ':'Hero is now a '+h[1]));code.push('player.sprite = "'+h[1]+'";');}});
+  if(has(s,['むずかし','難し','harder','hard'])){spec.enemies=Math.min(10,spec.enemies+2);spec.eSpeed=Math.min(2.5,spec.eSpeed+0.3);spec.spikes=Math.min(8,spec.spikes+1);acts.push(JA?'敵とトゲを増やして、むずかしくしたよ':'Made it harder');code.push('difficulty++;');}
+  if(has(s,['かんたん','簡単','easier','easy'])){spec.enemies=Math.max(0,spec.enemies-2);spec.spikes=Math.max(0,spec.spikes-1);spec.eSpeed=Math.max(0.6,spec.eSpeed-0.3);acts.push(JA?'敵を減らしてかんたんにしたよ':'Made it easier');code.push('difficulty--;');}
+  if(has(s,['リセット','最初から','reset','clear all'])){spec=blank();acts.push(JA?'ぜんぶ消して最初からにしたよ':'Reset everything');code.push('world.clear();');}
+  if(spec.mode==='none'&&acts.length&&!has(s,['リセット','reset'])){spec.mode='plat';code.unshift('player.gravity = true; // default');}
+  return {acts:acts,code:code};}
+// ---------- chat UI ----------
+function addMsg(cls,text){var d=document.createElement('div');d.className='msg '+cls;if(cls==='code')d.className='code';d.textContent=text;$('chat').appendChild(d);$('chat').scrollTop=1e9;return d;}
+var typing=Promise.resolve();
+function typeCode(text){typing=typing.then(function(){return new Promise(function(res){var d=addMsg('code','');var i=0;var iv=setInterval(function(){i+=3;d.textContent=text.slice(0,i);$('chat').scrollTop=1e9;tone(1500+Math.random()*400,0.01,'square',0.008,1);if(i>=text.length){clearInterval(iv);res();}},18);});});return typing;}
+function aiSay(text){typing=typing.then(function(){return new Promise(function(res){setTimeout(function(){addMsg('ai','🤖 '+text);res();},250);});});return typing;}
+function send(text){text=(text||'').trim();if(!text||mode2==='test')return;addMsg('me',text);$('inp').value='';var r=cody(text);
+  if(!r.acts.length){aiSay(TX.unk);return;}
+  aiSay(r.acts.join(JA?'。':'. ')+(JA?'！':'!'));typeCode(r.code.join('\n'));typing.then(function(){buildWorld();if(mi<M.length){var bad=checkReq(M[mi]);var total=M[mi].req.length;aiSay(TX.reqMet+(total-bad.length)+'/'+total+(bad.length?'':(JA?' ✅ '+TX.done:' ✅ '+TX.done)));}renderMission();});}
+$('send').onclick=function(){send($('inp').value);};
+$('inp').addEventListener('keydown',function(e){if(e.key==='Enter'){send($('inp').value);e.preventDefault();}});
+function renderMission(){var el=$('mission');if(mi>=M.length){el.innerHTML='🎨 <b>'+TX.free+'</b>';}else{var m=M[mi],bad=checkReq(m);el.innerHTML='📩 <b>'+TX.client+' '+(mi+1)+'/'+M.length+'</b>：'+(JA?m.ja:m.en)+'<br>'+m.req.map(function(r){var ok=bad.indexOf(r)<0;return (ok?'✅':'⬜')+' '+reqLabel(r);}).join('　');}
+  $('stars').textContent='⭐ '+SV.stars;var ch=$('chips');ch.innerHTML='';var list=mi<M.length?(JA?M[mi].chips.ja:M[mi].chips.en):(JA?['ジャンプできるようにして','上下左右に動けるようにして','コインを15枚','敵を6体','空とぶ敵を3体','トゲを4つ','ゴールを置いて','60秒生きのこる','宇宙にして','海にして','主人公をスライムに','むずかしくして','リセット']:['Let the player jump','Move in 4 directions','15 coins','6 enemies','3 flying enemies','4 spikes','Add a goal','Survive 60 seconds','Make it space','Make it the sea','Make the hero a slime','Make it harder','Reset']);
+  list.forEach(function(c){var b=document.createElement('button');b.className='chip';b.type='button';b.textContent=c;b.onclick=function(){send(c);};ch.appendChild(b);});}
+// ---------- the mini game engine ----------
+var cv=$('cv'),g=cv.getContext('2d'),W,H,DPR;
+var mode2='edit',state='title',t=0,world=null,pl=null,keys={},btn={l:0,r:0,j:0,d:0},joy=null,games=0,FX=[],msgT=0,msgTxt='';
+function fit(){DPR=Math.min(2,devicePixelRatio||1);var r=$('stage').getBoundingClientRect();W=r.width;H=r.height;cv.width=W*DPR;cv.height=H*DPR;}
+addEventListener('resize',function(){fit();});
+var AC=null,MUTED=false;function tone(f,d,type,vol,slide){if(MUTED)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),v=AC.createGain(),s=AC.currentTime;o.type=type||'square';o.frequency.setValueAtTime(f,s);o.frequency.exponentialRampToValueAtTime(f*(slide||1.4),s+d);v.gain.setValueAtTime(vol||0.04,s);v.gain.exponentialRampToValueAtTime(0.0001,s+d);o.connect(v);v.connect(AC.destination);o.start(s);o.stop(s+d);}catch(e){}}
+var seedN=1;function rnd(){seedN=(seedN*16807)%2147483647;return (seedN-1)/2147483646;}
+function buildWorld(){seedN=7+mi*13;var w={len:spec.mode==='plat'?1400:600,plats:[],coins:[],foes:[],spikes:[],goal:null};
+  if(spec.mode==='plat'){w.plats.push({x:0,y:0,w:w.len,h:1});for(var i=0;i<6;i++)w.plats.push({x:160+i*200+rnd()*60,y:70+rnd()*60,w:90+rnd()*40,h:14});
+    for(var c=0;c<spec.coins;c++){var p=w.plats[1+c%6];w.coins.push({x:p.x+15+((c/6|0)*28)%(p.w-20),y:p.y+28});}
+    for(var e=0;e<spec.enemies;e++)w.foes.push({k:'walk',x:300+e*(w.len-400)/Math.max(1,spec.enemies),y:0,vx:(rnd()<0.5?-1:1)*40*spec.eSpeed,ph:rnd()*6});
+    for(var f=0;f<spec.flyers;f++)w.foes.push({k:'fly',x:400+f*(w.len-500)/Math.max(1,spec.flyers),y:60+rnd()*50,vx:-50*spec.eSpeed,ph:rnd()*6,y0:60+rnd()*50});
+    for(var s=0;s<spec.spikes;s++)w.spikes.push({x:250+s*(w.len-400)/Math.max(1,spec.spikes)+70,w:26});
+    if(spec.goal)w.goal={x:w.len-60};}
+  else if(spec.mode==='top'){for(var c2=0;c2<spec.coins;c2++)w.coins.push({x:40+rnd()*520,y:40+rnd()*320});for(var e2=0;e2<spec.enemies;e2++)w.foes.push({k:'chase',x:rnd()<0.5?30:570,y:30+rnd()*340,ph:rnd()*6});for(var f2=0;f2<spec.flyers;f2++)w.foes.push({k:'bounce',x:100+rnd()*400,y:100+rnd()*200,vx:(rnd()<0.5?-1:1)*90*spec.eSpeed,vy:(rnd()<0.5?-1:1)*70*spec.eSpeed});for(var s2=0;s2<spec.spikes;s2++)w.spikes.push({x:80+rnd()*440,y:60+rnd()*280,w:22});if(spec.goal)w.goal={x:560,y:200};}
+  world=w;resetPlayer();}
+function resetPlayer(){pl={x:spec.mode==='top'?300:30,y:spec.mode==='top'?200:0,vx:0,vy:0,on:true,face:1,lives:spec.lives,inv:0,got:0,time:0,dashT:0};if(world){world.coins.forEach(function(c){c.got=0;});}}
+function startTest(){if(spec.mode==='none'){aiSay(JA?'まだ何もないよ！まず「ジャンプできるようにして」みたいに指示してね':'Nothing to test yet! Try "let the player jump" first.');return;}buildWorld();mode2='test';state='play';$('test').textContent=TX.stop;$('inp').disabled=true;msgT=0;}
+function stopTest(){mode2='edit';state='edit';$('test').textContent=TX.test;$('inp').disabled=false;resetPlayer();}
+$('test').onclick=function(){if(mode2==='test')stopTest();else startTest();};
+function hurt(){if(pl.inv>0)return;pl.lives--;pl.inv=1.2;tone(160,0.2,'sawtooth',0.05,0.5);if(pl.lives<=0){finish(false);}else if(spec.mode==='plat'){pl.x=Math.max(30,pl.x-120);pl.y=60;pl.vy=0;}}
+function finish(win){if(mode2!=='test')return;mode2='result';state='result';games++;msgTxt=win?TX.win:TX.lose;msgT=99;tone(win?660:150,0.25,win?'square':'sawtooth',0.05,win?1.5:0.5);
+  setTimeout(function(){if(win&&mi<M.length){var bad=checkReq(M[mi]);if(!bad.length){SV.stars+=3;mi++;SV.m=mi;store.set('sv',SV);var show=function(){if(mi>=M.length){$('endT').textContent=TX.allDone;$('endP').innerHTML=TX.allP;$('again').textContent=TX.free;}else{$('endT').textContent=TX.ok;$('endP').innerHTML=TX.okP+'<br>⭐ +3';$('again').textContent=TX.next;}$('cont').hidden=true;$('end').hidden=false;};if(games%2===0)cgAd('midgame',show,show);else show();return;}
+      aiSay(TX.miss+' '+bad.map(reqLabel).join(JA?'、':', '));}
+    stopTest();msgT=0;},1100);}
+$('again').onclick=function(){$('end').hidden=true;msgT=0;spec=blank();world=null;$('chat').innerHTML='';aiSay(TX.hello);renderMission();stopTest();};
+$('play').onclick=function(){$('title').hidden=true;state='edit';fit();aiSay(TX.hello);renderMission();};
+$('cont').onclick=function(){};
+function update(dt){t+=dt;msgT=Math.max(0,msgT-dt);FX.forEach(function(f){f.l-=dt;f.x+=f.vx*dt;f.y+=f.vy*dt;});FX=FX.filter(function(f){return f.l>0;});
+  if(mode2!=='test'||!world)return;pl.inv=Math.max(0,pl.inv-dt);pl.time+=dt;pl.dashT=Math.max(0,pl.dashT-dt);var dash=pl.dashT>0?2.2:1;
+  if(spec.mode==='plat'){var mv=((keys.r||btn.r)?1:0)-((keys.l||btn.l)?1:0);pl.vx=mv*150*dash;if(mv)pl.face=mv;if((keys.j||btn.j)&&pl.on){pl.vy=330;pl.on=false;tone(500,0.06,'square',0.03,1.6);}pl.vy-=900*dt;pl.x+=pl.vx*dt;var ny=pl.y+pl.vy*dt;pl.on=false;
+    world.plats.forEach(function(p){if(pl.x+10>p.x&&pl.x-10<p.x+p.w&&pl.y>=p.y-1&&ny<=p.y&&pl.vy<=0){ny=p.y;pl.vy=0;pl.on=true;}});pl.y=ny;if(pl.y<-60){hurt();pl.y=60;pl.vy=0;}pl.x=Math.max(10,Math.min(world.len-10,pl.x));
+    world.foes.forEach(function(f){f.ph+=dt;if(f.k==='walk'){f.x+=f.vx*dt;if(f.x<120||f.x>world.len-40)f.vx*=-1;}else{f.x+=f.vx*dt;if(f.x<50)f.x=world.len-30;f.y=f.y0+Math.sin(f.ph*3)*30;}
+      if(Math.abs(f.x-pl.x)<20&&Math.abs((f.k==='walk'?14:f.y)-(pl.y+14))<22){if(f.k==='walk'&&pl.vy<0&&pl.y>8){f.dead=1;pl.vy=240;tone(800,0.08,'square',0.04,1.5);}else hurt();}});world.foes=world.foes.filter(function(f){return !f.dead;});
+    world.spikes.forEach(function(s){if(pl.x>s.x-4&&pl.x<s.x+s.w+4&&pl.y<12)hurt();});
+    world.coins.forEach(function(c){if(!c.got&&Math.abs(c.x-pl.x)<18&&Math.abs(c.y-(pl.y+14))<22){c.got=1;pl.got++;tone(1200,0.05,'square',0.03,1.3);}});
+    var allC=world.coins.every(function(c){return c.got;});if(world.goal&&pl.x>world.goal.x-10&&(allC||!spec.coins||true)){if(!spec.coins||allC)finish(true);}else if(!world.goal&&spec.coins&&allC&&!spec.timer)finish(true);}
+  else{var mx=((keys.r||btn.r)?1:0)-((keys.l||btn.l)?1:0),my=((keys.d)?1:0)-((keys.u)?1:0);if(joy&&joy.on){var dx=joy.x-joy.sx,dy=joy.y-joy.sy,dl=Math.hypot(dx,dy);if(dl>6){mx=dx/dl;my=dy/dl;}}var ml=Math.hypot(mx,my);if(ml>1){mx/=ml;my/=ml;}pl.x=Math.max(10,Math.min(590,pl.x+mx*160*dash*dt));pl.y=Math.max(10,Math.min(390,pl.y+my*160*dash*dt));if(mx)pl.face=mx>0?1:-1;
+    world.foes.forEach(function(f){if(f.k==='chase'){var dx=pl.x-f.x,dy=pl.y-f.y,d=Math.hypot(dx,dy)||1;f.x+=dx/d*55*spec.eSpeed*dt;f.y+=dy/d*55*spec.eSpeed*dt;}else{f.x+=f.vx*dt;f.y+=f.vy*dt;if(f.x<10||f.x>590)f.vx*=-1;if(f.y<10||f.y>390)f.vy*=-1;}if(Math.hypot(f.x-pl.x,f.y-pl.y)<22)hurt();});
+    world.spikes.forEach(function(s){if(Math.abs(s.x-pl.x)<18&&Math.abs(s.y-pl.y)<18)hurt();});
+    world.coins.forEach(function(c){if(!c.got&&Math.hypot(c.x-pl.x,c.y-pl.y)<20){c.got=1;pl.got++;tone(1200,0.05,'square',0.03,1.3);}});
+    var allC2=world.coins.every(function(c){return c.got;});if(world.goal&&Math.hypot(world.goal.x-pl.x,world.goal.y-pl.y)<24&&(!spec.coins||allC2))finish(true);else if(!world.goal&&spec.coins&&allC2&&!spec.timer)finish(true);}
+  if(spec.timer&&pl.time>=spec.timer&&(!spec.coins||world.coins.every(function(c){return c.got;})))finish(true);
+  if(!spec.goal&&!spec.coins&&!spec.timer&&pl.time>8)finish(true);}
+// input
+function km(e,v){var k=e.key;if(document.activeElement===$('inp'))return;if(k==='ArrowLeft'||k==='a')keys.l=v;else if(k==='ArrowRight'||k==='d')keys.r=v;else if(k==='ArrowUp'||k==='w'||k===' '){keys.j=v;keys.u=v;}else if(k==='ArrowDown'||k==='s')keys.d=v;else if(k==='Shift'||k==='x'){if(v&&spec.dash)pl.dashT=0.3;}else return;e.preventDefault();}
+addEventListener('keydown',function(e){km(e,1);});addEventListener('keyup',function(e){km(e,0);});
+function ctrlRects(){var s=Math.min(64,H*0.22),y=H-s-8;return {l:{x:8,y:y,w:s,h:s},r:{x:16+s,y:y,w:s,h:s},j:{x:W-s-8,y:y,w:s,h:s},d:{x:W-s*2-16,y:y,w:s,h:s}};}
+var ptrs={};function recompute(){btn={l:0,r:0,j:0,d:0};var c=ctrlRects();Object.keys(ptrs).forEach(function(id){var p=ptrs[id];['l','r','j','d'].forEach(function(k){var b=c[k];if(p.x>b.x&&p.x<b.x+b.w&&p.y>b.y-10&&p.y<b.y+b.h)btn[k]=1;});});if(btn.d&&spec.dash&&pl)pl.dashT=0.3;}
+cv.addEventListener('pointerdown',function(e){e.preventDefault();var r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;if(mode2!=='test')return;if(spec.mode==='top'){var c=ctrlRects();if(spec.dash&&x>c.d.x&&y>c.d.y){pl.dashT=0.3;return;}joy={on:true,sx:x,sy:y,x:x,y:y};}else{ptrs[e.pointerId]={x:x,y:y};recompute();}try{cv.setPointerCapture(e.pointerId);}catch(_){}});
+cv.addEventListener('pointermove',function(e){var r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;if(joy&&joy.on){joy.x=x;joy.y=y;}if(ptrs[e.pointerId]){ptrs[e.pointerId]={x:x,y:y};recompute();}});
+function pu(e){delete ptrs[e.pointerId];recompute();if(joy)joy.on=false;}cv.addEventListener('pointerup',pu);cv.addEventListener('pointercancel',pu);
+// ---- CrazyGames SDK ----
+var CG=null,cgOn=null;
+(function(){var h=location.hostname,q=location.search;if(!/crazygames/.test(h)&&q.indexOf('cg=1')<0&&q.indexOf('crazygames_sandbox')<0)return;var sc=document.createElement('script');sc.src='https://sdk.crazygames.com/crazygames-sdk-v3.js';
+  sc.onload=function(){var S0=window.CrazyGames&&window.CrazyGames.SDK;if(!S0)return;Promise.resolve(S0.init()).then(function(){CG=S0;cgOn=null;}).catch(function(){});};document.head.appendChild(sc);})();
+function cgSync(){var on=state==='play'||state==='edit';if(!CG||on===cgOn)return;cgOn=on;try{on?CG.game.gameplayStart():CG.game.gameplayStop();}catch(e){}}
+function cgAd(kind,done,fail){if(!CG){if(fail)fail();return;}var st0=state,end=function(ok){MUTED=false;try{if(AC)AC.resume();}catch(e){}if(state==='ad')state=st0;if(ok){if(done)done();}else if(fail)fail();};
+  try{CG.ad.requestAd(kind,{adStarted:function(){MUTED=true;try{if(AC)AC.suspend();}catch(e){}state='ad';},adFinished:function(){end(true);},adError:function(){end(false);}});}catch(e){end(false);}}
+// ---- draw ----
+function C(x,y,r,c){g.fillStyle=c;g.beginPath();g.arc(x,y,Math.max(0.1,r),0,7);g.fill();}
+function rr(x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
+var TH={grid:['#2a2f4a','#343a5a','#5a6aa8'],forest:['#a8e0a0','#7ac86a','#5a3a2a'],space:['#0e0a2a','#1a1450','#7a7ad8'],sea:['#5ac8f0','#2a8ad8','#e8d8a0'],city:['#1a1838','#2a2858','#5a5a7a']};
+function heroArt(x,y,s,face){var k=spec.hero;g.save();g.translate(x,y);g.scale(face,1);if(k==='cat'){C(0,-12*s,11*s,'#ffb02a');g.fillStyle='#ffb02a';g.beginPath();g.moveTo(-10*s,-17*s);g.lineTo(-7*s,-28*s);g.lineTo(-2*s,-20*s);g.fill();g.beginPath();g.moveTo(10*s,-17*s);g.lineTo(7*s,-28*s);g.lineTo(2*s,-20*s);g.fill();C(4*s,-14*s,2*s,'#1a1a2a');C(-3*s,-14*s,2*s,'#1a1a2a');}
+  else if(k==='robot'){g.fillStyle='#8a9ab8';rr(-10*s,-24*s,20*s,22*s,4*s);g.fill();g.fillStyle='#5ae0ff';g.fillRect(-6*s,-19*s,12*s,5*s);g.strokeStyle='#c8ccd8';g.beginPath();g.moveTo(0,-24*s);g.lineTo(0,-30*s);g.stroke();C(0,-31*s,2.5*s,'#ff6a6a');}
+  else if(k==='slime'){g.fillStyle='#7ae05a';g.beginPath();g.ellipse(0,-9*s,13*s,10*s,0,0,7);g.fill();C(4*s,-11*s,2.2*s,'#1a1a2a');C(-3*s,-11*s,2.2*s,'#1a1a2a');}
+  else{g.fillStyle='#ff6a6a';rr(-10*s,-22*s,20*s,20*s,5*s);g.fill();C(4*s,-14*s,2.5*s,'#fff');C(4.5*s,-14*s,1.2*s,'#1a1a2a');}g.restore();}
+function render(){g.setTransform(DPR,0,0,DPR,0,0);var th=TH[spec.theme];var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,th[0]);gr.addColorStop(1,th[1]);g.fillStyle=gr;g.fillRect(0,0,W,H);
+  if(spec.theme==='space'){for(var i=0;i<40;i++)C((i*97)%W,(i*53)%H,1+(i%3)*0.6,'rgba(255,255,255,.7)');}
+  if(spec.theme==='city'){for(var b=0;b<10;b++){var bh=40+(b*37)%70;g.fillStyle='#2a2850';g.fillRect(b*W/9,H*0.75-bh,W/9-4,bh);g.fillStyle='rgba(255,220,120,.6)';for(var wy=H*0.75-bh+8;wy<H*0.75-6;wy+=12)g.fillRect(b*W/9+6,wy,4,4);}}
+  if(spec.theme==='sea'){for(var q=0;q<12;q++)C((q*83+t*10)%W,H-((q*61+t*30)%H),3,'rgba(255,255,255,.35)');}
+  if(spec.theme==='forest'){for(var tr=0;tr<8;tr++){g.fillStyle='#4a9a4a';g.beginPath();g.arc(tr*W/7,H*0.72,40,Math.PI,0);g.fill();}}
+  if(!world){g.fillStyle='rgba(255,255,255,.5)';g.textAlign='center';g.font="800 15px Rubik,'M PLUS Rounded 1c'";g.fillText(JA?'ここにゲームができあがるよ':'Your game appears here',W/2,H/2-8);g.font="700 12px Rubik,'M PLUS Rounded 1c'";g.fillText(JA?'↓ コディに指示してね':'↓ Tell Cody what to build',W/2,H/2+14);drawMsg();return;}
+  var s;if(spec.mode==='plat'){s=Math.min(1,H/220);var camX=Math.max(0,Math.min(world.len-W/s,pl.x-W/s*0.35)),gy=H*0.86;var X=function(x){return (x-camX)*s;},Y=function(y){return gy-y*s;};
+    world.plats.forEach(function(p,i){if(i===0){g.fillStyle=th[2];g.fillRect(0,gy,W,H-gy);g.fillStyle='rgba(255,255,255,.15)';g.fillRect(0,gy,W,3);}else{g.fillStyle=th[2];rr(X(p.x),Y(p.y),p.w*s,12*s,5*s);g.fill();g.fillStyle='rgba(255,255,255,.25)';g.fillRect(X(p.x)+4,Y(p.y),p.w*s-8,3);}});
+    world.spikes.forEach(function(sp){g.fillStyle='#c8ccd8';for(var k=0;k<3;k++){g.beginPath();g.moveTo(X(sp.x+k*sp.w/3),gy);g.lineTo(X(sp.x+(k+0.5)*sp.w/3),gy-14*s);g.lineTo(X(sp.x+(k+1)*sp.w/3),gy);g.fill();}});
+    world.coins.forEach(function(c){if(c.got)return;var sq=Math.abs(Math.cos(t*4+c.x));g.fillStyle='#ffd84a';g.beginPath();g.ellipse(X(c.x),Y(c.y),7*s*sq+1,7*s,0,0,7);g.fill();});
+    if(world.goal){g.fillStyle='#fff';g.fillRect(X(world.goal.x),gy-60*s,3,60*s);g.fillStyle='#3ac85a';g.beginPath();g.moveTo(X(world.goal.x)+3,gy-60*s);g.lineTo(X(world.goal.x)+28*s,gy-50*s);g.lineTo(X(world.goal.x)+3,gy-40*s);g.fill();}
+    world.foes.forEach(function(f){var fx=X(f.x),fy=f.k==='walk'?gy:Y(f.y);if(f.k==='walk'){g.fillStyle='#b05aff';g.beginPath();g.ellipse(fx,fy-10*s,13*s,10*s,0,0,7);g.fill();C(fx-4*s,fy-12*s,2.5*s,'#fff');C(fx+4*s,fy-12*s,2.5*s,'#fff');}else{var wf=Math.sin(f.ph*14)*5*s;g.fillStyle='#ff6a4a';g.beginPath();g.moveTo(fx-14*s,fy-wf);g.lineTo(fx,fy+4*s);g.lineTo(fx+14*s,fy-wf);g.fill();C(fx,fy,7*s,'#ff8a5a');C(fx-2*s,fy-1*s,1.6*s,'#fff');}});
+    if(pl.inv<=0||Math.floor(t*20)%2)heroArt(X(pl.x),Y(pl.y),s,pl.face);
+    if(mode2==='test'){var c=ctrlRects();[['l','◀'],['r','▶'],['j','⤒']].concat(spec.dash?[['d','💨']]:[]).forEach(function(q){var b=c[q[0]];g.fillStyle=btn[q[0]]?'rgba(255,255,255,.5)':'rgba(255,255,255,.2)';rr(b.x,b.y,b.w,b.h,14);g.fill();g.fillStyle='#fff';g.textAlign='center';g.font='900 22px Rubik';g.fillText(q[1],b.x+b.w/2,b.y+b.h/2+8);});}}
+  else if(spec.mode==='top'){s=Math.min(W/600,H/400);var ox=(W-600*s)/2,oy=(H-400*s)/2;var X2=function(x){return ox+x*s;},Y2=function(y){return oy+y*s;};g.strokeStyle=th[2];g.lineWidth=3;g.strokeRect(ox,oy,600*s,400*s);
+    world.spikes.forEach(function(sp){g.fillStyle='#c8ccd8';for(var k=0;k<4;k++){var a=k*1.57;g.beginPath();g.moveTo(X2(sp.x),Y2(sp.y));g.lineTo(X2(sp.x)+Math.cos(a-0.4)*14*s,Y2(sp.y)+Math.sin(a-0.4)*14*s);g.lineTo(X2(sp.x)+Math.cos(a+0.4)*14*s,Y2(sp.y)+Math.sin(a+0.4)*14*s);g.fill();}});
+    world.coins.forEach(function(c){if(c.got)return;g.fillStyle='#ffd84a';g.beginPath();for(var k=0;k<5;k++){var a=k*1.2566-1.57+t;g.lineTo(X2(c.x)+Math.cos(a)*9*s,Y2(c.y)+Math.sin(a)*9*s);g.lineTo(X2(c.x)+Math.cos(a+0.628)*4*s,Y2(c.y)+Math.sin(a+0.628)*4*s);}g.fill();});
+    if(world.goal){C(X2(world.goal.x),Y2(world.goal.y),16*s,'rgba(58,200,90,.5)');C(X2(world.goal.x),Y2(world.goal.y),9*s,'#3ac85a');}
+    world.foes.forEach(function(f){C(X2(f.x),Y2(f.y),11*s,f.k==='chase'?'#b05aff':'#ff6a4a');C(X2(f.x)-3*s,Y2(f.y)-2*s,2.5*s,'#fff');C(X2(f.x)+3*s,Y2(f.y)-2*s,2.5*s,'#fff');});
+    if(pl.inv<=0||Math.floor(t*20)%2)heroArt(X2(pl.x),Y2(pl.y)+10*s,s,pl.face);
+    if(joy&&joy.on){g.strokeStyle='rgba(255,255,255,.4)';g.lineWidth=3;g.beginPath();g.arc(joy.sx,joy.sy,34,0,7);g.stroke();}}
+  // HUD
+  if(mode2==='test'||mode2==='result'){g.fillStyle='rgba(0,0,0,.4)';rr(6,6,W-12,26,13);g.fill();g.fillStyle='#fff';g.font='800 13px Rubik';g.textAlign='left';g.fillText('❤'.repeat(Math.max(0,pl.lives))+(spec.coins?'  🪙 '+pl.got+'/'+spec.coins:''),16,24);g.textAlign='right';if(spec.timer)g.fillText('⏱ '+Math.max(0,Math.ceil(spec.timer-pl.time))+'s',W-16,24);}
+  else{g.fillStyle='rgba(0,0,0,.35)';rr(6,6,150,22,11);g.fill();g.fillStyle='#fff';g.font='800 11px Rubik';g.textAlign='left';g.fillText(JA?'✏️ 編集中（▶テストで遊ぶ）':'✏️ Editing (▶ Test to play)',14,21);}
+  drawMsg();}
+function drawMsg(){if(msgT>0){g.textAlign='center';g.font="900 34px Rubik,'M PLUS Rounded 1c'";g.lineWidth=6;g.strokeStyle='rgba(0,0,0,.5)';g.strokeText(msgTxt,W/2,H*0.45);g.fillStyle=msgTxt===TX.win?'#ffd84a':'#ff8a8a';g.fillText(msgTxt,W/2,H*0.45);}}
+var last=performance.now();function frame(now){var dt=Math.min(0.05,(now-last)/1000);last=now;update(dt);render();cgSync();requestAnimationFrame(frame);}
+fit();requestAnimationFrame(frame);
+</script>
+</body>
+</html>

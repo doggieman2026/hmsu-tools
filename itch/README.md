@@ -1,4 +1,4 @@
-# itch.io アップロードのしかた（hmsu Games 49本）
+# itch.io アップロードのしかた（hmsu Games 50本）
 
 ## 最初の1回だけ
 1. https://itch.io/register で登録（メールとパスワード）。届いたメールのリンクを押して確認。
@@ -66,5 +66,6 @@
 | hero-swarm.zip | Hero Swarm | Move — attacks are automatic. Mow down the swarm, level up, combine skills and survive 5 minutes to face the boss. | Action RPG / survivor, roguelite, bullet heaven | 480×800 |
 | spike-bounce.zip | Spike Bounce | Tap to flap, bounce wall to wall and slip through the gaps as new spikes pop up. | Action / one-tap, arcade, hard | 480×800 |
 | goal-flick.zip | Goal Flick | Swipe to take free kicks — curve the ball around the wall and past the cat keeper. | Sports / soccer, swipe, casual | 480×800 |
+| ai-game-studio.zip | AI Game Studio | Tell your AI partner Cody what to build in plain words — Cody writes the code and the mini game appears. Fill client orders, playtest and ship! | Programming / AI, sandbox, creative | 480×800 |
 
 ※ AIを使って作ったことを書く欄（AI generation disclosure）があれば「Yes」にする。
